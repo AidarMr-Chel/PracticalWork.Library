@@ -1,13 +1,14 @@
 ﻿using PracticalWork.Library.Models;
 
-
 namespace PracticalWork.Library.Abstractions.Storage
 {
     public interface IReaderRepository
     {
-        Task<Guid> CreateReader(Reader reader);
-        Task ExtendReader(Guid id, DateOnly newDate);
-        Task CloseReader(Guid id);
-        Task<IEnumerable<Book>> GetBook(Guid id);
+        Task<Reader> GetByIdAsync(Guid id);
+        Task<Reader> GetByPhoneAsync(string phone);
+        Task AddAsync(Reader reader);
+        Task UpdateAsync(Reader reader);
+        Task<IEnumerable<Book>> GetBooksByIdsAsync(IEnumerable<Guid> ids);
+        Task<Reader> GetByNameAsync(string fullName);
     }
 }

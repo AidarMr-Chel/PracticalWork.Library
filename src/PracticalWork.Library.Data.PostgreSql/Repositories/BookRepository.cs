@@ -8,117 +8,107 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories;
 
 public sealed class BookRepository : IBookRepository
 {
-    private readonly AppDbContext _appDbContext;
+    private readonly AppDbContext _context;
 
-    public BookRepository(AppDbContext appDbContext)
+    public BookRepository(AppDbContext context)
     {
-        _appDbContext = appDbContext;
+        _context = context;
     }
 
-    public async Task<Guid> CreateBook(Book book)
+    public async Task<Guid> AddAsync(Book book)
+    {
+        var entity = MapBookToEntity(book);
+        _context.Add(entity);
+        await _context.SaveChangesAsync();
+        return entity.Id;
+    }
+
+    public async Task<Book> GetByIdAsync(Guid id)
+    {
+        var entity = await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
+        return entity is null ? null : MapEntityToBook(entity);
+    }
+
+    public async Task UpdateAsync(Book book)
+    {
+        var entity = await _context.Books.FirstOrDefaultAsync(b => b.Id == book.Id);
+        if (entity is null)
+            throw new ArgumentException($"Книга с id={book.Id} не найдена");
+
+        MapBookToEntity(book, entity);
+        _context.Update(entity);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<IEnumerable<Book>> FindAsync(Book filter)
+    {
+        var query = _context.Books.AsQueryable();
+
+        if (filter.Status != default)
+            query = query.Where(b => b.Status == filter.Status);
+
+        if (filter.Category != default)
+        {
+            query = query.Where(b =>
+                (b is ScientificBookEntity && filter.Category == BookCategory.ScientificBook) ||
+                (b is EducationalBookEntity && filter.Category == BookCategory.EducationalBook) ||
+                (b is FictionBookEntity && filter.Category == BookCategory.FictionBook));
+        }
+
+        if (filter.Authors?.Any() == true)
+        {
+            query = query.Where(b =>
+                b.Authors.Count == filter.Authors.Count &&
+                b.Authors.All(a => filter.Authors.Contains(a)));
+        }
+
+        var entities = await query.ToListAsync();
+        return entities.Select(MapEntityToBook);
+    }
+
+    private static AbstractBookEntity MapBookToEntity(Book book)
     {
         AbstractBookEntity entity = book.Category switch
         {
             BookCategory.ScientificBook => new ScientificBookEntity(),
             BookCategory.EducationalBook => new EducationalBookEntity(),
             BookCategory.FictionBook => new FictionBookEntity(),
-            _ => throw new ArgumentException($"Неподдерживаемая категория книги: {book.Category}", nameof(book.Category))
+            _ => throw new ArgumentException($"Неподдерживаемая категория книги: {book.Category}")
         };
 
-        entity.Title = book.Title;
-        entity.Description = book.Description;
-        entity.Year = book.Year;
-        entity.Authors = book.Authors;
-        entity.Status = book.Status;
-
-        _appDbContext.Add(entity);
-        await _appDbContext.SaveChangesAsync();
-
-        return entity.Id;
+        MapBookToEntity(book, entity);
+        return entity;
     }
 
-    public async Task UpdateBook(Guid id, Book book)
+    private static void MapBookToEntity(Book book, AbstractBookEntity entity)
     {
-        var entity = await _appDbContext.Books.FirstOrDefaultAsync(b => b.Id == id);
-        if (entity == null)
-            throw new ArgumentException($"Книга с id={id} не найдена", nameof(id));
-
-        // Обновляем только разрешённые поля — не меняем категорию
+        entity.Id = book.Id == Guid.Empty ? Guid.NewGuid() : book.Id;
         entity.Title = book.Title;
         entity.Description = book.Description;
         entity.Year = book.Year;
-        entity.Authors = book.Authors;
+        entity.Authors = book.Authors.ToList();
         entity.Status = book.Status;
 
-        // Обновляем путь к обложке, если пришёл непустой
         if (!string.IsNullOrEmpty(book.CoverImagePath))
             entity.CoverImagePath = book.CoverImagePath;
-
-        _appDbContext.Update(entity);
-        await _appDbContext.SaveChangesAsync();
     }
 
-    public async Task<Book> ArchivingBook(Guid id)
+    private static Book MapEntityToBook(AbstractBookEntity entity) => new()
     {
-        var entity = await _appDbContext.Books.FirstOrDefaultAsync(b => b.Id == id);
-        if (entity == null)
-            throw new ArgumentException($"Книга с id={id} не найдена", nameof(id));
-
-        if (entity.Status == BookStatus.Borrow)
-            throw new InvalidOperationException("Невозможно заархивировать книгу, которая выдана читателю.");
-
-        entity.Status = BookStatus.Archived;
-
-        _appDbContext.Update(entity);
-        await _appDbContext.SaveChangesAsync();
-        return new Book
+        Id = entity.Id,
+        Title = entity.Title,
+        Authors = entity.Authors,
+        Description = entity.Description,
+        Year = entity.Year,
+        Category = entity switch
         {
-            Title = entity.Title,
-            Authors = entity.Authors,
-            Description = entity.Description,
-            Year = entity.Year,
-            Category = entity switch
-            {
-                ScientificBookEntity => BookCategory.ScientificBook,
-                EducationalBookEntity => BookCategory.EducationalBook,
-                FictionBookEntity => BookCategory.FictionBook,
-                _ => throw new ArgumentException($"Неподдерживаемая категория книги: {entity.GetType().Name}")
-            },
-            Status = entity.Status,
-            CoverImagePath = entity.CoverImagePath,
-            IsArchived = true
-        };
-    }
-
-    public async Task<IEnumerable<Book>> GetBooks(Book book)
-    {
-        var query = _appDbContext.Books.AsQueryable();
-        query = query.Where(b => b.Status == book.Status);
-        query = query.Where(b =>
-        (b is ScientificBookEntity && book.Category == BookCategory.ScientificBook) ||
-        (b is EducationalBookEntity && book.Category == BookCategory.EducationalBook) ||
-        (b is FictionBookEntity && book.Category == BookCategory.FictionBook));
-        query = query.Where(b =>
-            b.Authors.Count == book.Authors.Count &&
-            b.Authors.All(a => book.Authors.Contains(a)));
-
-        var entities = await query.ToListAsync();
-        return entities.Select(entity => new Book
-        {
-            Title = entity.Title,
-            Authors = entity.Authors,
-            Description = entity.Description,
-            Year = entity.Year,
-            Category = entity switch
-            {
-                ScientificBookEntity => BookCategory.ScientificBook,
-                EducationalBookEntity => BookCategory.EducationalBook,
-                FictionBookEntity => BookCategory.FictionBook,
-                _ => throw new ArgumentException($"Неподдерживаемая категория книги: {entity.GetType().Name}")
-            },
-            Status = entity.Status,
-            CoverImagePath = entity.CoverImagePath,
-            IsArchived = entity.Status == BookStatus.Archived
-        });
-    }
+            ScientificBookEntity => BookCategory.ScientificBook,
+            EducationalBookEntity => BookCategory.EducationalBook,
+            FictionBookEntity => BookCategory.FictionBook,
+            _ => throw new ArgumentException($"Неподдерживаемая категория книги: {entity.GetType().Name}")
+        },
+        Status = entity.Status,
+        CoverImagePath = entity.CoverImagePath,
+        IsArchived = entity.Status == BookStatus.Archived
+    };
 }

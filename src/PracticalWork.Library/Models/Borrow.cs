@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PracticalWork.Library.Enums;
-
+﻿using PracticalWork.Library.Enums;
 
 namespace PracticalWork.Library.Models
 {
@@ -13,6 +7,9 @@ namespace PracticalWork.Library.Models
     /// </summary>
     public sealed class Borrow
     {
+        /// <summary>Идентификатор выдачи</summary>
+        public Guid Id { get; set; }
+
         /// <summary>Идентификатор книги</summary>
         public Guid BookId { get; set; }
 
@@ -28,7 +25,7 @@ namespace PracticalWork.Library.Models
         /// <summary>Фактическая дата возврата книги</summary>
         public DateOnly ReturnDate { get; set; }
 
-        /// <summary>Статус книги в библиотеке</summary>
+        /// <summary>Статус выдачи</summary>
         public BookIssueStatus Status { get; set; }
     }
 }

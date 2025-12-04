@@ -1,15 +1,13 @@
 ﻿using PracticalWork.Library.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PracticalWork.Library.Abstractions.Storage
 {
     public interface IBorrowRepository
     {
-        Task<Guid> CreateBorrow(Guid bookId, Guid readerId);
-
+        Task<Borrow> GetActiveBorrowAsync(Guid bookId);
+        Task<Guid> AddBorrowAsync(Borrow borrow);
+        Task UpdateBorrowAsync(Borrow borrow);
+        Task<Borrow> GetByIdAsync(Guid id);
+        Task<Borrow> GetByReaderIdAsync(Guid readerId);
     }
 }

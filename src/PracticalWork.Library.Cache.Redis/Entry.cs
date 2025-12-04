@@ -6,16 +6,16 @@ namespace PracticalWork.Library.Cache.Redis;
 public static class Entry
 {
     /// <summary>
-    /// Регистрация зависимостей для распределенного Cache
+    /// Регистрация зависимостей для распределенного Cache (Redis)
     /// </summary>
-    public static IServiceCollection AddCache(this IServiceCollection serviceCollection, IConfiguration configuration)
+    public static IServiceCollection AddCache(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration["App:Redis:RedisCacheConnection"];
-        var prefix = configuration["App:Redis:RedisCachePrefix"];
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration["App:Redis:Configuration"];
+            options.InstanceName = configuration["App:Redis:InstanceName"];
+        });
 
-        // Реализация подключения к Redis и сервисов
-
-        return serviceCollection;
+        return services;
     }
 }
-

@@ -1,13 +1,20 @@
 ﻿using JetBrains.Annotations;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using PracticalWork.Library.Abstractions.Services;
+using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Cache.Redis;
 using PracticalWork.Library.Controllers;
 using PracticalWork.Library.Data.Minio;
 using PracticalWork.Library.Data.PostgreSql;
+using PracticalWork.Library.Data.PostgreSql.Repositories;
 using PracticalWork.Library.Exceptions;
+using PracticalWork.Library.Services;
 using PracticalWork.Library.Web.Configuration;
+using System.Net.Sockets;
 using System.Text.Json.Serialization;
+using System.Xml.Linq;
 
 namespace PracticalWork.Library.Web;
 
@@ -35,9 +42,9 @@ public class Startup
         });
 
         services.AddMvc(opt =>
-            {
-                opt.Filters.Add<DomainExceptionFilter<AppException>>();
-            })
+        {
+            opt.Filters.Add<DomainExceptionFilter<AppException>>();
+        })
             .AddApi()
             .AddControllersAsServices()
             .AddJsonOptions(options =>
@@ -48,15 +55,27 @@ public class Startup
 
         services.AddSwaggerGen(c =>
         {
+            c.CustomSchemaIds(type => type.FullName);
             c.UseOneOfForPolymorphism();
             c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "PracticalWork.Library.Contracts.xml"));
             c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "PracticalWork.Library.Controllers.xml"));
         });
 
+
+
         services.AddDomain();
         services.AddCache(Configuration);
         services.AddMinioFileStorage(Configuration);
+
+        services.AddScoped<IBookRepository, BookRepository>();
+        services.AddScoped<IReaderRepository, ReaderRepository>();
+        services.AddScoped<IBorrowRepository, BorrowRepository>();
+
+        services.AddScoped<IBookService, BookService>();
+        services.AddScoped<IReaderService, ReaderService>();
+        services.AddScoped<IBorrowService, BorrowService>();
     }
+
 
     [UsedImplicitly]
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime lifetime,
@@ -83,3 +102,5 @@ public class Startup
         });
     }
 }
+
+

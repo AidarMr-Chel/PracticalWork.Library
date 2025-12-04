@@ -11,7 +11,7 @@ namespace PracticalWork.Library.Controllers.Api.v1;
 [ApiController]
 [ApiVersion("1")]
 [Route("api/v{version:apiVersion}/books")]
-public class BooksController : Controller
+public class BooksController : ControllerBase
 {
     private readonly IBookService _bookService;
 
@@ -20,80 +20,103 @@ public class BooksController : Controller
         _bookService = bookService;
     }
 
-    /// <summary> Создание новой книги</summary>
+    /// <summary>Создание новой книги</summary>
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPost]
-    [Produces("application/json")]
-    [ProducesResponseType(typeof(CreateBookResponse), 200)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(500)]
-    public async Task<IActionResult> CreateOrder([FromBody] CreateBookRequest request)
+    [ProducesResponseType(typeof(CreateBookResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> CreateBook([FromBody] CreateBookRequest request)
     {
-        var result = await _bookService.CreateBook(request.ToBook());
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        return Content(result.ToString());
+        var id = await _bookService.CreateBook(request.ToBook());
+
+        var response = new CreateBookResponse(id, request.Title);
+        return StatusCode(StatusCodes.Status201Created, response);
     }
 
-    /// <summary> Обновление книги по идентификатору</summary>
+    /// <summary>
+    /// Обновление книги по идентификатору
+    /// </summary>
     /// <param name="id"></param>
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(204)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(404)]
-    [ProducesResponseType(500)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateBook(Guid id, [FromBody] UpdateBookRequest request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         await _bookService.UpdateBook(id, request.ToBook());
         return NoContent();
     }
 
-
-    /// <summary> Архивирование книги по идентификатору</summary>
+    /// <summary>
+    /// >Архивирование книги по идентификатору
+    /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
     [HttpPut("{id:guid}/archive")]
-    [ProducesResponseType(typeof(ArchiveBookResponse), 200)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(404)]
-    [ProducesResponseType(500)]
-    public async Task<ActionResult<ArchiveBookResponse>> ArchiveBook(Guid id)
+    [ProducesResponseType(typeof(ArchiveBookResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ArchiveBook(Guid id)
     {
-        var result = await _bookService.ArchivingBook(id);
+        var book = await _bookService.ArchivingBook(id);
+        if (book is null)
+            return NotFound();
 
-        if (result is null)
-            return NotFound($"Книга с Id {id} не найдена.");
-
-        var response = new ArchiveBookResponse(id, result.Title, DateTime.Now);
+        var response = new ArchiveBookResponse(book.Id, book.Title, DateTime.UtcNow);
         return Ok(response);
     }
 
-
     /// <summary>
-    /// Получение списка книг
+    /// Получение списка книг (с фильтрацией и пагинацией, кеш Redis)
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<BookDetailsResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetBooks([FromQuery] BookFilterRequest request)
     {
-        var books = await _bookService.GetBooks(request.ToBook());
+        var books = await _bookService.GetBooks(
+            request.ToBook(),
+            request.PageNumber,
+            request.PageSize
+        );
 
         if (books == null || !books.Any())
             return NotFound("Книги не найдены по заданному фильтру.");
 
-        var pagedBooks = books
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .ToList();
-
-        return Ok(pagedBooks);
+        var response = books.Select(b => b.ToDetailsResponse()).ToList();
+        return Ok(response);
     }
 
+    /// <summary>
+    /// Обновление деталей книги (описание + обложка)
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [HttpPost("{id:guid}/details")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UpdateDetails(Guid id, [FromForm] UpdateBookDetailsRequest request)
+    {
+        using var stream = request.CoverFile.OpenReadStream();
+        await _bookService.UpdateBookDetailsAsync(
+            id,
+            request.Description,
+            stream,
+            request.CoverFile.FileName,
+            request.CoverFile.ContentType
+        );
+
+        return NoContent();
+    }
 }

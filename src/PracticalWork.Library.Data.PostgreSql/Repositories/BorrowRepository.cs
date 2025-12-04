@@ -1,61 +1,82 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Data.PostgreSql.Entities;
 using PracticalWork.Library.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Data.PostgreSql.Repositories
 {
     public sealed class BorrowRepository : IBorrowRepository
     {
-        private readonly AppDbContext _appDbContext;
-        public BorrowRepository(AppDbContext appDbContext)
+        private readonly AppDbContext _context;
+
+        public BorrowRepository(AppDbContext context)
         {
-            _appDbContext = appDbContext;
+            _context = context;
         }
 
-        public async Task<Guid> CreateBorrow(Guid bookId, Guid readerId)
+        public async Task<Borrow> GetActiveBorrowAsync(Guid bookId)
         {
-            var book = await _appDbContext.Books.FirstOrDefaultAsync(b => b.Id == bookId);
-            if (book == null)
-                throw new InvalidOperationException($"Книга с id={bookId} не найдена");
+            var entity = await _context.BookBorrows
+                .FirstOrDefaultAsync(b => b.BookId == bookId && b.Status == BookIssueStatus.Issued);
 
-            if (book.Status == BookStatus.Archived)
-                throw new InvalidOperationException("Книга находится в архиве и недоступна для выдачи");
+            return entity == null ? null : MapToModel(entity);
+        }
 
-            if (book.Status == BookStatus.Borrow)
-                throw new InvalidOperationException("Книга уже выдана другому читателю");
+        public async Task<Guid> AddBorrowAsync(Borrow borrow)
+        {
+            var entity = MapToEntity(borrow);
+            _context.BookBorrows.Add(entity);
+            await _context.SaveChangesAsync();
+            return entity.Id;
+        }
 
-            var reader = await _appDbContext.Readers.FirstOrDefaultAsync(r => r.Id == readerId);
-            if (reader == null)
-                throw new InvalidOperationException($"Читатель с id={readerId} не найден");
+        public async Task UpdateBorrowAsync(Borrow borrow)
+        {
+            var entity = await _context.BookBorrows.FirstOrDefaultAsync(b => b.Id == borrow.Id);
+            if (entity == null) throw new InvalidOperationException("Запись не найдена");
 
-            if (!reader.IsActive)
-                throw new InvalidOperationException("Карточка читателя неактивна");
+            entity.ReturnDate = borrow.ReturnDate;
+            entity.Status = borrow.Status;
 
-            var borrowEntity = new BookBorrowEntity
-            {
-                ReaderId = readerId,
-                BookId = bookId,
-                BorrowDate = DateOnly.FromDateTime(DateTime.UtcNow),
-                DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
-                Status = BookIssueStatus.Issued
-            };
+            await _context.SaveChangesAsync();
+        }
 
-            //todo: читателю добавить запись о том что он взял книгу
 
-            _appDbContext.BookBorrows.Add(borrowEntity);
+        private static Borrow MapToModel(BookBorrowEntity entity) => new()
+        {
+            Id = entity.Id,
+            BookId = entity.BookId,
+            ReaderId = entity.ReaderId,
+            BorrowDate = entity.BorrowDate,
+            DueDate = entity.DueDate,
+            ReturnDate = entity.ReturnDate,
+            Status = entity.Status
+        };
 
-            book.Status = BookStatus.Borrow;
-            _appDbContext.Books.Update(book);
+        private static BookBorrowEntity MapToEntity(Borrow model) => new()
+        {
+            Id = model.Id == Guid.Empty ? Guid.NewGuid() : model.Id,
+            BookId = model.BookId,
+            ReaderId = model.ReaderId,
+            BorrowDate = model.BorrowDate,
+            DueDate = model.DueDate,
+            ReturnDate = model.ReturnDate,
+            Status = model.Status
+        };
+        public async Task<Borrow> GetByIdAsync(Guid id)
+        {
+            var entity = await _context.BookBorrows.FirstOrDefaultAsync(b => b.Id == id);
+            return entity == null ? null : MapToModel(entity);
+        }
 
-            await _appDbContext.SaveChangesAsync();
-            return borrowEntity.Id;
+        public async Task<Borrow> GetByReaderIdAsync(Guid readerId)
+        {
+            var entity = await _context.BookBorrows
+                .OrderByDescending(b => b.BorrowDate)
+                .FirstOrDefaultAsync(b => b.ReaderId == readerId);
+
+            return entity == null ? null : MapToModel(entity);
         }
 
     }

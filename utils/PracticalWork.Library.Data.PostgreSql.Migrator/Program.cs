@@ -23,6 +23,8 @@ public class Program
                 .AddJsonFile("appsettings.json", false)
                 .Build();
 
+            Console.WriteLine("Connection: " + Configuration["App:DbConnectionString"]);
+
             await MigrateDatabase();
         }
         catch (Exception exception)
@@ -68,3 +70,4 @@ public class Program
         return logger;
     }
 }
+

@@ -13,6 +13,7 @@ public static class Entry
     {
         services.AddScoped<IBookService, BookService>();
         services.AddScoped<IReaderService, ReaderService>();
+        services.AddScoped<IBorrowService, BorrowService>();
 
         return services;
     }

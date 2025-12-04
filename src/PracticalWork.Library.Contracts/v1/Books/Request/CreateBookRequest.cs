@@ -11,5 +11,5 @@ namespace PracticalWork.Library.Contracts.v1.Books.Request;
 /// <param name="Authors">Авторы</param>
 /// <param name="Description">Краткое описание книги</param>
 /// <param name="Year">Год издания</param>
-public sealed record CreateBookRequest(string Title, BookCategory Category, IReadOnlyList<string> Authors, string Description, int Year)
+public sealed record CreateBookRequest(string Title, BookCategory? Category, IReadOnlyList<string> Authors, string Description, int Year)
     : AbstractBook(Title, Authors, Description, Year);

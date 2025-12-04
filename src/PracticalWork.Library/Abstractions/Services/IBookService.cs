@@ -21,5 +21,24 @@ public interface IBookService
     /// <returns></returns>
     Task<Book> ArchivingBook(Guid id);
 
-    Task<IEnumerable<Book>> GetBooks(Book book);
+    /// <summary>
+    /// Получение списка книг по фильтру
+    /// </summary>
+    /// <param name="filter"></param>
+    /// <param name="pageNumber"></param>
+    /// <param name="pageSize"></param>
+    /// <returns></returns>
+    Task<IEnumerable<Book>> GetBooks(Book filter, int pageNumber = 1, int pageSize = 10);
+
+    /// <summary>
+    /// Добавление деталей о книге
+    /// </summary>
+    /// <param name="bookId"></param>
+    /// <param name="description"></param>
+    /// <param name="coverStream"></param>
+    /// <param name="fileName"></param>
+    /// <param name="contentType"></param>
+    /// <returns></returns>
+    Task UpdateBookDetailsAsync(Guid bookId, string description, Stream coverStream, string fileName, string contentType);
+
 }

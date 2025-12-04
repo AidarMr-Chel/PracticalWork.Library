@@ -4,4 +4,5 @@
 /// Ответ на создание книги
 /// </summary>
 /// <param name="Id">Идентификатор книги</param>
-public sealed record CreateBookResponse(Guid Id);
+/// <param name="Title"></param>
+public sealed record CreateBookResponse(Guid Id, string Title);

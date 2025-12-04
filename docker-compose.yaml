@@ -1,20 +1,40 @@
 services:
-  # PostgreSQL database
-  # Заполнить 
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"      # Web UI и API
+      - "9001:9001"      # Admin Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
 
-  # Redis cache
-  # Заполнить 
+  redis:
+    image: redis:7
+    container_name: library_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 
-  # MinIO file storage
-  # Заполнить 
-
-  # pgAdmin for database management
-  # Заполнить 
-
-  # Redis Commander for Redis management
-  # Заполнить 
+  postgres:
+    image: postgres:15
+    container_name: library_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: library
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 135792468
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
- postgres_data:
- redis_data:
- minio_data:
+  postgres_data:
+  redis_data:
+  minio_data:
