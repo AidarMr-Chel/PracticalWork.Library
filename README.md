@@ -1,186 +1,203 @@
-# \# Общие сведения
+Общие сведения
 
-# 
+Наименование сервиса
 
-# \### Наименование сервиса
+PracticalWork.Library
 
-# 
+Назначение
 
-# PracticalWork.Library
+-   Получение опыта в основах ООП и Docker.
+-   Разработка системы управления библиотекой.
 
-# 
+Исполняемые модули
 
-# \### Назначение
+1.  PracticalWork.Library.Web — ASP.NET 8 WebApi
+2.  PracticalWork.Library.Data.PostgreSql.Migrator — запуск миграций
 
-# 
+Интеграции
 
-# \-   Получение опыта в основах ООП и Docker.
+1.  База данных — PostgreSQL
+2.  Распределенный кэш — Redis
+3.  Хранение файлов — MinIO
 
-# \-   Разработка системы управления библиотекой.
+Инструменты разработки
 
-# 
+1.  Rider, Visual Studio 2022 или VS Code
+2.  PostgreSQL pgAdmin или DBeaver
+3.  Redis Insight (опционально)
 
-# \### Исполняемые модули
+------------------------------------------------------------------------
 
-# 
+Инструкция по запуску и тестированию
 
-# 1\.  \*\*PracticalWork.Library.Web\*\* --- ASP.NET 8 WebApi
+Предварительные требования
 
-# 2\.  \*\*PracticalWork.Library.Data.PostgreSql.Migrator\*\* --- запуск
+-   Установлен Docker и Docker Compose
+-   Установлен .NET 8 SDK (или версия, указанная в проекте)
+-   Установлен PostgreSQL клиент (для проверки БД вручную)
+-   Установлен Redis CLI (опционально, для проверки кэша)
 
-# &nbsp;   миграций
+Запуск проекта
 
-# 
+Собери и запусти инфраструктуру (Postgres, Redis, MinIO):
 
-# ------------------------------------------------------------------------
+    docker-compose up -d
 
-# 
+Это поднимет три контейнера: - library_postgres — база данных
+PostgreSQL - library_redis — кэш Redis - minio — файловое хранилище для
+обложек книг
 
-# \# Инструкция по запуску и тестированию
+Примените миграции к базе данных:
 
-# 
+    dotnet ef database update --project src/PracticalWork.Library.Data.PostgreSql
 
-# \## Предварительные требования
+Запусти веб-приложение:
 
-# 
+    dotnet run --project src/PracticalWork.Library.Web
 
-# \-   Установлен Docker и Docker Compose
+Приложение будет доступно по адресу: http://localhost:5251
 
-# \-   Установлен .NET 8 SDK
+------------------------------------------------------------------------
 
-# \-   Установлен PostgreSQL клиент
+Тестирование API
 
-# \-   Установлен Redis CLI (опционально)
+Swagger доступен по адресу: http://localhost:5251/swagger
 
-# 
+Основные сценарии
 
-# \## Запуск проекта
+-   Добавление книги — POST /api/v1/books
+-   Редактирование книги — PUT /api/v1/books/{id}
+-   Архивирование книги — POST /api/v1/books/{id}/archive
+-   Получение списка книг — GET /api/v1/books?PageNumber=1&PageSize=10
+-   Добавление деталей книги (обложка) — POST /api/v1/books/{id}/details
+-   Выдача книги читателю —
+    POST /api/v1/library/borrow?bookId={id}&readerId={id}
+-   Возврат книги — POST /api/v1/library/return?bookId={id}
+-   Получение доступных книг — GET /api/v1/library/books
+-   Детали выдачи книги — GET /api/v1/library/{idOrReader}/details
 
-# 
+------------------------------------------------------------------------
 
-# ``` bash
+Проверка кэша Redis
 
-# docker-compose up -d
+    docker exec -it library_redis redis-cli
+    keys *
 
-# ```
+------------------------------------------------------------------------
 
-# 
+Проверка MinIO
 
-# ``` bash
+Консоль MinIO: http://localhost:9001 Логин/пароль:
+minioadmin / minioadmin Загруженные обложки хранятся в бакете
+book-covers.
 
-# dotnet ef database update --project src/PracticalWork.Library.Data.PostgreSql
+------------------------------------------------------------------------
 
-# ```
+Примеры запросов для проверки функциональности
 
-# 
+Добавление книги
 
-# ``` bash
+    curl -X POST http://localhost:5251/api/v1/books \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Преступление и наказание",
+        "category": 1,
+        "authors": ["Ф.М. Достоевский"],
+        "year": 1866,
+        "description": "Роман о судьбе студента Раскольникова"
+      }'
 
-# dotnet run --project src/PracticalWork.Library.Web
+Редактирование книги
 
-# ```
+    curl -X PUT http://localhost:5251/api/v1/books/{bookId} \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Преступление и наказание (ред.)",
+        "authors": ["Ф.М. Достоевский"],
+        "year": 1866,
+        "description": "Обновлённое описание"
+      }'
 
-# 
+Архивирование книги
 
-# Swagger:\\
+    curl -X POST http://localhost:5251/api/v1/books/{bookId}/archive
 
-# http://localhost:5251/swagger
+Получение списка книг
 
-# 
+    curl "http://localhost:5251/api/v1/books?PageNumber=1&PageSize=10&Category=1&Status=Available"
 
-# ------------------------------------------------------------------------
+Добавление деталей книги (обложка)
 
-# 
+    curl -X POST http://localhost:5251/api/v1/books/{bookId}/details \
+      -F "description=Новая обложка" \
+      -F "coverFile=@cover.png"
 
-# \# Архитектурные решения
+Выдача книги читателю
 
-# 
+    curl -X POST "http://localhost:5251/api/v1/library/borrow?bookId={bookId}&readerId={readerId}"
 
-# \## 1. Слой Contracts
+Возврат книги
 
-# 
+    curl -X POST "http://localhost:5251/api/v1/library/return?bookId={bookId}"
 
-# DTO-объекты для обмена между API и клиентами. Используются nullable‑поля
+Получение доступных книг
 
-# для фильтрации.
+    curl "http://localhost:5251/api/v1/library/books"
 
-# 
+Детали выдачи книги
 
-# \## 2. Слой Controllers
+    curl "http://localhost:5251/api/v1/library/{borrowId}/details"
 
-# 
+------------------------------------------------------------------------
 
-# Контроллеры принимают запросы, валидация через `ModelState`,
+Описание архитектурных решений
 
-# документация через Swagger.
+1. Слой Contracts
 
-# 
+DTO-объекты (BookFilterRequest, CreateBookRequest,
+BorrowDetailsResponse) для обмена данными между API и клиентами.
+Используются nullable-поля для гибкой фильтрации.
 
-# \## 3. Слой Services
+2. Слой Controllers
 
-# 
+ASP.NET Core контроллеры (BooksController, BorrowController) принимают
+запросы. Валидация входных данных через ModelState. Swagger подключён
+для документирования API.
 
-# \### BookService
+3. Слой Services
 
-# 
+BookService
 
-# \-   CRUD операции
+-   CRUD-операции над книгами
+-   Интеграция с Redis для кэширования списков и деталей
+-   Интеграция с MinIO для хранения обложек
+-   Инвалидация кэша при изменениях
 
-# \-   Кэш Redis
+BorrowService
 
-# \-   Хранение обложек MinIO
+-   Логика выдачи и возврата книг
+-   Проверка статуса книги и активности читателя
+-   Кэширование доступных книг и деталей выдачи
+-   Инвалидация кэша при изменениях
 
-# \-   Инвалидация кэша
+4. Слой Repositories
 
-# 
+Реализация доступа к PostgreSQL через EF Core. Репозитории
+(BookRepository, BorrowRepository, ReaderRepository) отвечают только за
+CRUD. Бизнес-логика вынесена в сервисы.
 
-# \### BorrowService
+5. Инфраструктура
 
-# 
+-   PostgreSQL — основная база данных
+-   Redis — распределённый кэш для ускорения запросов
+-   MinIO — объектное хранилище для файлов (обложки книг)
+-   Все сервисы запускаются через docker-compose
 
-# \-   Логика выдачи/возврата
+6. Архитектурные принципы
 
-# \-   Проверка статусов
-
-# \-   Кэширование
-
-# \-   Инвалидация
-
-# 
-
-# \## 4. Слой Repositories
-
-# 
-
-# Доступ к PostgreSQL через EF Core. Репозитории только для CRUD, логика в
-
-# сервисах.
-
-# 
-
-# \## 5. Инфраструктура
-
-# 
-
-# \-   PostgreSQL --- база
-
-# \-   Redis --- распределенный кэш
-
-# \-   MinIO --- объектное хранилище
-
-# \-   Запуск через docker-compose
-
-# 
-
-# \## 6. Принципы
-
-# 
-
-# \-   Чистая архитектура
-
-# \-   Loose coupling через интерфейсы
-
-# \-   API Versioning через Asp.Versioning
-
-
-
+-   Чистая архитектура: разделение слоёв (Contracts -> Controllers ->
+    Services -> Repositories -> Storage)
+-   Инвалидация кэша через реестр ключей
+-   Loose coupling: работа через интерфейсы
+-   API Versioning: используется Asp.Versioning для поддержки нескольких
+    версий API
