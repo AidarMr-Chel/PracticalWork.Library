@@ -5,6 +5,9 @@ using PracticalWork.Reports.Entities.DTO;
 
 namespace PracticalWork.Reports.Web.Controllers;
 
+/// <summary>
+/// Контроллер для получения логов активности системы.
+/// </summary>
 [ApiController]
 [Route("api/reports/activity")]
 public class ActivityController : ControllerBase
@@ -16,7 +19,27 @@ public class ActivityController : ControllerBase
         _db = db;
     }
 
+    /// <summary>
+    /// Получение логов активности с фильтрацией и пагинацией.
+    /// </summary>
+    /// <param name="filter">
+    /// Фильтры:
+    /// <br/>• <b>From</b> — дата начала периода
+    /// <br/>• <b>To</b> — дата окончания периода
+    /// <br/>• <b>EventType</b> — тип события
+    /// <br/>• <b>Page</b> — номер страницы (по умолчанию 1)
+    /// <br/>• <b>PageSize</b> — размер страницы (по умолчанию 20)
+    /// </param>
+    /// <returns>
+    /// Объект <see cref="PagedResult{ActivityLogDto}"/> содержащий:
+    /// <br/>• список логов
+    /// <br/>• общее количество записей
+    /// <br/>• номер страницы
+    /// <br/>• размер страницы
+    /// </returns>
+    /// <response code="200">Успешное получение логов активности</response>
     [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<ActivityLogDto>), StatusCodes.Status200OK)]
     public async Task<PagedResult<ActivityLogDto>> Get([FromQuery] ActivityLogFilterDto filter)
     {
         var query = _db.ActivityLogs.AsQueryable();
