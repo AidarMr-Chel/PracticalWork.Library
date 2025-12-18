@@ -1,40 +1,86 @@
+version: "3.9"
+
 services:
+  # MinIO (общий для Library и Reports)
   minio:
     image: minio/minio:latest
     container_name: minio
     ports:
-      - "9000:9000"      # Web UI и API
-      - "9001:9001"      # Admin Console
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
+    networks:
+      - backend
 
+  # Redis (общий для Library и Reports)
   redis:
     image: redis:7
-    container_name: library_redis
+    container_name: redis
     restart: always
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - backend
 
-  postgres:
+  # PostgreSQL для Library Service
+  postgres_library:
     image: postgres:15
-    container_name: library_postgres
+    container_name: postgres_library
     restart: always
     environment:
       POSTGRES_DB: library
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 135792468
     ports:
-      - "5432:5432"
+      - "5440:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_library_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  # PostgreSQL для Reports Service
+  postgres_reports:
+    image: postgres:15
+    container_name: postgres_reports
+    restart: always
+    environment:
+      POSTGRES_DB: reports
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 135792468
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_reports_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  # RabbitMQ (брокер сообщений)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Web UI
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: rabbit
+    networks:
+      - backend
 
 volumes:
-  postgres_data:
+  postgres_library_data:
+  postgres_reports_data:
   redis_data:
   minio_data:
+
+networks:
+  backend:
+    driver: bridge

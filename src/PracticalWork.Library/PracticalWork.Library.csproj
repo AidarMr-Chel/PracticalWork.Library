@@ -14,4 +14,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
     <PackageReference Include="Minio" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PracticalWork.Library.Contracts\PracticalWork.Library.Contracts.csproj" />
+    <ProjectReference Include="..\PracticalWork.Library.MessageBroker\PracticalWork.Library.MessageBroker.csproj" />
+  </ItemGroup>
 </Project>

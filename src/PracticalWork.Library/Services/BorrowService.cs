@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
-using PracticalWork.Library.Abstractions.Services;
+﻿using PracticalWork.Library.Abstractions.Services;
 using PracticalWork.Library.Abstractions.Storage;
+using PracticalWork.Library.Contracts.v1.Events.Borrows;
 using PracticalWork.Library.Enums;
+using PracticalWork.Library.MessageBroker.Abstractions;
 using PracticalWork.Library.Models;
-using System.Text.Json;
 
 namespace PracticalWork.Library.Services
 {
@@ -12,7 +12,8 @@ namespace PracticalWork.Library.Services
         private readonly IBorrowRepository _borrowRepository;
         private readonly IBookRepository _bookRepository;
         private readonly IReaderRepository _readerRepository;
-        private readonly IDistributedCache _cache;
+        private readonly ICacheService _cache;
+        private readonly IMessagePublisher _publisher;
 
         private const string BorrowKeysRegistry = "Borrow:Keys";
         private const string AvailableBooksKeysRegistry = "AvailableBooks:Keys";
@@ -21,12 +22,14 @@ namespace PracticalWork.Library.Services
             IBorrowRepository borrowRepository,
             IBookRepository bookRepository,
             IReaderRepository readerRepository,
-            IDistributedCache cache)
+            ICacheService cache,
+            IMessagePublisher publisher)
         {
             _borrowRepository = borrowRepository;
             _bookRepository = bookRepository;
             _readerRepository = readerRepository;
             _cache = cache;
+            _publisher = publisher;
         }
 
         public async Task<Guid> CreateBorrow(Guid bookId, Guid readerId)
@@ -61,8 +64,16 @@ namespace PracticalWork.Library.Services
             book.Status = BookStatus.Borrow;
             await _bookRepository.UpdateAsync(book);
 
-            await ClearCacheByRegistry(BorrowKeysRegistry);
-            await ClearCacheByRegistry(AvailableBooksKeysRegistry);
+            await _cache.ClearByRegistryAsync(BorrowKeysRegistry);
+            await _cache.ClearByRegistryAsync(AvailableBooksKeysRegistry);
+            await _publisher.PublishAsync(new BookBorrowedEvent
+            {
+                BorrowId = borrowId,
+                BookId = bookId,
+                ReaderId = readerId,
+                BorrowedAt = DateTime.UtcNow,
+                DueDate = borrow.DueDate.ToDateTime(TimeOnly.MinValue)
+            });
 
             return borrowId;
         }
@@ -83,28 +94,32 @@ namespace PracticalWork.Library.Services
             book.Status = BookStatus.Available;
             await _bookRepository.UpdateAsync(book);
 
-            await ClearCacheByRegistry(BorrowKeysRegistry);
-            await ClearCacheByRegistry(AvailableBooksKeysRegistry);
+            await _cache.ClearByRegistryAsync(BorrowKeysRegistry);
+            await _cache.ClearByRegistryAsync(AvailableBooksKeysRegistry);
+            await _publisher.PublishAsync(new BookReturnedEvent
+            {
+                BorrowId = borrow.Id,
+                BookId = bookId,
+                ReaderId = borrow.ReaderId,
+                ReturnedAt = DateTime.UtcNow
+            });
         }
 
         public async Task<IEnumerable<Book>> GetAvailableBooksAsync(Book filter)
         {
-            var cacheKey = $"AvailableBooks:{filter.Category}:{filter.Status}:{string.Join(",", filter.Authors ?? new List<string>())}:{filter.Year}";
+            var cacheKey =
+                $"AvailableBooks:{filter.Category}:{filter.Status}:{string.Join(",", filter.Authors ?? new List<string>())}:{filter.Year}";
 
-            var cached = await _cache.GetStringAsync(cacheKey);
+            var cached = await _cache.GetAsync<IEnumerable<Book>>(cacheKey);
             if (cached != null)
-                return JsonSerializer.Deserialize<IEnumerable<Book>>(cached);
+                return cached;
 
             var books = await _bookRepository.FindAsync(filter);
             var available = books.Where(b => !b.IsArchived).ToList();
 
-            var json = JsonSerializer.Serialize(available);
-            await _cache.SetStringAsync(cacheKey, json, new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-            });
+            await _cache.SetAsync(cacheKey, available, TimeSpan.FromMinutes(10));
+            await _cache.TrackKeyAsync(AvailableBooksKeysRegistry, cacheKey);
 
-            await TrackCacheKeyAsync(AvailableBooksKeysRegistry, cacheKey);
             return available;
         }
 
@@ -112,20 +127,15 @@ namespace PracticalWork.Library.Services
         {
             var cacheKey = $"Borrow:{id}";
 
-            var cached = await _cache.GetStringAsync(cacheKey);
+            var cached = await _cache.GetAsync<Borrow>(cacheKey);
             if (cached != null)
-                return JsonSerializer.Deserialize<Borrow>(cached);
+                return cached;
 
             var borrow = await _borrowRepository.GetByIdAsync(id);
             if (borrow != null)
             {
-                var json = JsonSerializer.Serialize(borrow);
-                await _cache.SetStringAsync(cacheKey, json, new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-                });
-
-                await TrackCacheKeyAsync(BorrowKeysRegistry, cacheKey);
+                await _cache.SetAsync(cacheKey, borrow, TimeSpan.FromMinutes(10));
+                await _cache.TrackKeyAsync(BorrowKeysRegistry, cacheKey);
             }
 
             return borrow;
@@ -142,37 +152,10 @@ namespace PracticalWork.Library.Services
                 return await GetByIdAsync(id);
 
             var reader = await _readerRepository.GetByNameAsync(idOrReader);
-            if (reader == null) return null;
+            if (reader == null)
+                return null;
 
             return await _borrowRepository.GetByReaderIdAsync(reader.Id);
-        }
-
-
-        private async Task TrackCacheKeyAsync(string registryKey, string key)
-        {
-            var existing = await _cache.GetStringAsync(registryKey);
-            var keys = existing != null
-                ? JsonSerializer.Deserialize<HashSet<string>>(existing)
-                : new HashSet<string>();
-
-            keys.Add(key);
-
-            var json = JsonSerializer.Serialize(keys);
-            await _cache.SetStringAsync(registryKey, json);
-        }
-
-        private async Task ClearCacheByRegistry(string registryKey)
-        {
-            var existing = await _cache.GetStringAsync(registryKey);
-            if (existing == null) return;
-
-            var keys = JsonSerializer.Deserialize<HashSet<string>>(existing);
-            foreach (var key in keys)
-            {
-                await _cache.RemoveAsync(key);
-            }
-
-            await _cache.RemoveAsync(registryKey);
         }
     }
 }

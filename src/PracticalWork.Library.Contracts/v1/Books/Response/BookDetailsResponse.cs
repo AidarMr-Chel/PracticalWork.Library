@@ -13,9 +13,10 @@ namespace PracticalWork.Library.Contracts.v1.Books.Response
         IReadOnlyList<string> Authors,
         string Description,
         int Year,
-        string CoverImageUrl,   // теперь URL, а не просто путь
+        string CoverImageUrl,
         BookStatus Status,
         bool IsArchived,
-        bool IsBorrowed          // добавлено для сценария 2
+        bool IsBorrowed
     ) : AbstractBook(Title, Authors, Description, Year);
+
 }

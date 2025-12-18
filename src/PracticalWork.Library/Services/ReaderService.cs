@@ -1,6 +1,8 @@
 ﻿using PracticalWork.Library.Abstractions.Services;
 using PracticalWork.Library.Abstractions.Storage;
+using PracticalWork.Library.Contracts.v1.Events.Readers;
 using PracticalWork.Library.Enums;
+using PracticalWork.Library.MessageBroker.Abstractions;
 using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Services
@@ -8,10 +10,12 @@ namespace PracticalWork.Library.Services
     public sealed class ReaderService : IReaderService
     {
         private readonly IReaderRepository _readerRepository;
+        private readonly IMessagePublisher _publisher;
 
-        public ReaderService(IReaderRepository readerRepository)
+        public ReaderService(IReaderRepository readerRepository, IMessagePublisher publisher)
         {
             _readerRepository = readerRepository;
+            _publisher = publisher;
         }
 
         public async Task<Guid> CreateReader(Reader reader)
@@ -25,6 +29,14 @@ namespace PracticalWork.Library.Services
             reader.IsActive = true;
 
             await _readerRepository.AddAsync(reader);
+            await _publisher.PublishAsync(new ReaderCreatedEvent
+            {
+                ReaderId = reader.Id,
+                FullName = reader.FullName,
+                PhoneNumber = reader.PhoneNumber,
+                CreatedAt = DateTime.UtcNow
+            });
+
             return reader.Id;
         }
 
@@ -51,14 +63,20 @@ namespace PracticalWork.Library.Services
             if (!reader.IsActive)
                 throw new InvalidOperationException("Карточка уже неактивна");
 
-            var books = await _readerRepository.GetBooksByIdsAsync(new[] { id });
+            var books = await _readerRepository.GetBooksByReaderIdAsync( id );
             var notReturned = books.Where(b => b.Status != BookStatus.Archived).ToList();
 
             if (notReturned.Any())
                 throw new InvalidOperationException($"У читателя есть несданные книги: {string.Join(", ", notReturned.Select(b => b.Id))}");
 
             reader.IsActive = false;
+
             await _readerRepository.UpdateAsync(reader);
+            await _publisher.PublishAsync(new ReaderClosedEvent
+            {
+                ReaderId = id,
+                ClosedAt = DateTime.UtcNow
+            });
         }
 
         public async Task<IEnumerable<Book>> GetBook(Guid id)
@@ -69,9 +87,9 @@ namespace PracticalWork.Library.Services
             if (!reader.IsActive)
                 throw new InvalidOperationException("Карточка неактивна");
 
-            var books = await _readerRepository.GetBooksByIdsAsync(new[] { id });
-            return books;
+            return await _readerRepository.GetBooksByReaderIdAsync(id);
         }
+
 
         public async Task<Guid?> FindReaderIdByPhoneAsync(string phone)
         {

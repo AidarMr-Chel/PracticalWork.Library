@@ -1,35 +1,46 @@
-﻿using System.Text.Json;
-using Microsoft.Extensions.Caching.Distributed;
-using PracticalWork.Library.Abstractions.Services;
+﻿using PracticalWork.Library.Abstractions.Services;
 using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Enums;
 using PracticalWork.Library.Exceptions;
+using PracticalWork.Library.MessageBroker.Abstractions;
 using PracticalWork.Library.Models;
-
-namespace PracticalWork.Library.Services;
+using PracticalWork.Library.Contracts.v1.Events.Books;
 
 public sealed class BookService : IBookService
 {
     private readonly IBookRepository _bookRepository;
     private readonly IMinioService _minioService;
-    private readonly IDistributedCache _cache;
+    private readonly ICacheService _cache;
+    private readonly IMessagePublisher _publisher;
 
-    private const string CacheKeyRegistry = "Books:Keys";
-    private const string DetailsCacheRegistry = "Books:Details:Keys";
+    private const string BooksRegistry = "Books:Keys";
+    private const string DetailsRegistry = "Books:Details:Keys";
 
-    public BookService(IBookRepository bookRepository, IMinioService minioService, IDistributedCache cache)
+    public BookService(
+        IBookRepository bookRepository,
+        IMinioService minioService,
+        ICacheService cache,
+        IMessagePublisher publisher)
     {
         _bookRepository = bookRepository;
         _minioService = minioService;
         _cache = cache;
+        _publisher = publisher;
     }
-
 
     public async Task<Guid> CreateBook(Book book)
     {
         book.Status = BookStatus.Available;
         var id = await _bookRepository.AddAsync(book);
-        await ClearBooksCache();
+
+        await _cache.ClearByRegistryAsync(BooksRegistry);
+        await _publisher.PublishAsync(new BookCreatedEvent
+        {
+            BookId = id,
+            Title = book.Title,
+            Category = book.Category.ToString(),
+            CreatedAt = DateTime.UtcNow
+        });
         return id;
     }
 
@@ -43,8 +54,9 @@ public sealed class BookService : IBookService
 
         book.Id = id;
         await _bookRepository.UpdateAsync(book);
-        await ClearBooksCache();
-        await ClearBookDetailsCache(id);
+
+        await _cache.ClearByRegistryAsync(BooksRegistry);
+        await _cache.RemoveAsync($"Book:{id}:Details");
     }
 
     public async Task<Book> ArchivingBook(Guid id)
@@ -54,19 +66,25 @@ public sealed class BookService : IBookService
 
         book.Archive();
         await _bookRepository.UpdateAsync(book);
-        await ClearBooksCache();
-        await ClearBookDetailsCache(id);
+
+        await _cache.ClearByRegistryAsync(BooksRegistry);
+        await _cache.RemoveAsync($"Book:{id}:Details");
+        await _publisher.PublishAsync(new BookArchivedEvent
+        {
+            BookId = id,
+            ArchivedAt = DateTime.UtcNow
+        });
+
         return book;
     }
-
 
     public async Task<IEnumerable<Book>> GetBooks(Book filter, int pageNumber = 1, int pageSize = 10)
     {
         var cacheKey = $"Books:{filter.Category}:{filter.Status}:{string.Join(",", filter.Authors ?? new List<string>())}:{filter.Year}:Page{pageNumber}:Size{pageSize}";
 
-        var cached = await _cache.GetStringAsync(cacheKey);
+        var cached = await _cache.GetAsync<IEnumerable<Book>>(cacheKey);
         if (cached != null)
-            return JsonSerializer.Deserialize<IEnumerable<Book>>(cached);
+            return cached;
 
         var books = await _bookRepository.FindAsync(filter);
 
@@ -75,34 +93,25 @@ public sealed class BookService : IBookService
             .Take(pageSize)
             .ToList();
 
-        var json = JsonSerializer.Serialize(paged);
-        await _cache.SetStringAsync(cacheKey, json, new DistributedCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-        });
-        await TrackCacheKeyAsync(CacheKeyRegistry, cacheKey);
+        await _cache.SetAsync(cacheKey, paged, TimeSpan.FromMinutes(10));
+        await _cache.TrackKeyAsync(BooksRegistry, cacheKey);
 
         return paged;
     }
-
 
     public async Task<Book> GetBookDetailsAsync(Guid bookId)
     {
         var cacheKey = $"Book:{bookId}:Details";
 
-        var cached = await _cache.GetStringAsync(cacheKey);
+        var cached = await _cache.GetAsync<Book>(cacheKey);
         if (cached != null)
-            return JsonSerializer.Deserialize<Book>(cached);
+            return cached;
 
         var book = await _bookRepository.GetByIdAsync(bookId)
             ?? throw new BookServiceException($"Книга с id={bookId} не найдена");
 
-        var json = JsonSerializer.Serialize(book);
-        await _cache.SetStringAsync(cacheKey, json, new DistributedCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-        });
-        await TrackCacheKeyAsync(DetailsCacheRegistry, cacheKey);
+        await _cache.SetAsync(cacheKey, book, TimeSpan.FromMinutes(10));
+        await _cache.TrackKeyAsync(DetailsRegistry, cacheKey);
 
         return book;
     }
@@ -114,7 +123,7 @@ public sealed class BookService : IBookService
 
         book.Description = description;
 
-        if (coverStream != null && fileName != null && contentType != null)
+        if (coverStream != null)
         {
             if (!contentType.StartsWith("image/"))
                 throw new InvalidOperationException("Файл должен быть изображением");
@@ -128,55 +137,8 @@ public sealed class BookService : IBookService
         }
 
         await _bookRepository.UpdateAsync(book);
-        await ClearBooksCache();
-        await ClearBookDetailsCache(bookId);
-    }
 
-
-    private async Task TrackCacheKeyAsync(string registryKey, string key)
-    {
-        var existing = await _cache.GetStringAsync(registryKey);
-        var keys = existing != null
-            ? JsonSerializer.Deserialize<HashSet<string>>(existing)
-            : new HashSet<string>();
-
-        keys.Add(key);
-
-        var json = JsonSerializer.Serialize(keys);
-        await _cache.SetStringAsync(registryKey, json);
-    }
-
-    private async Task ClearBooksCache()
-    {
-        await ClearCacheByRegistry(CacheKeyRegistry);
-    }
-
-    private async Task ClearBookDetailsCache(Guid bookId)
-    {
-        var cacheKey = $"Book:{bookId}:Details";
-        await _cache.RemoveAsync(cacheKey);
-
-        var existing = await _cache.GetStringAsync(DetailsCacheRegistry);
-        if (existing != null)
-        {
-            var keys = JsonSerializer.Deserialize<HashSet<string>>(existing);
-            keys.Remove(cacheKey);
-            var json = JsonSerializer.Serialize(keys);
-            await _cache.SetStringAsync(DetailsCacheRegistry, json);
-        }
-    }
-
-    private async Task ClearCacheByRegistry(string registryKey)
-    {
-        var existing = await _cache.GetStringAsync(registryKey);
-        if (existing == null) return;
-
-        var keys = JsonSerializer.Deserialize<HashSet<string>>(existing);
-        foreach (var key in keys)
-        {
-            await _cache.RemoveAsync(key);
-        }
-
-        await _cache.RemoveAsync(registryKey);
+        await _cache.ClearByRegistryAsync(BooksRegistry);
+        await _cache.RemoveAsync($"Book:{bookId}:Details");
     }
 }

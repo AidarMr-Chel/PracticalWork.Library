@@ -10,6 +10,7 @@ using PracticalWork.Library.Data.Minio;
 using PracticalWork.Library.Data.PostgreSql;
 using PracticalWork.Library.Data.PostgreSql.Repositories;
 using PracticalWork.Library.Exceptions;
+using PracticalWork.Library.MessageBroker;
 using PracticalWork.Library.Services;
 using PracticalWork.Library.Web.Configuration;
 using System.Net.Sockets;
@@ -66,14 +67,7 @@ public class Startup
         services.AddDomain();
         services.AddCache(Configuration);
         services.AddMinioFileStorage(Configuration);
-
-        services.AddScoped<IBookRepository, BookRepository>();
-        services.AddScoped<IReaderRepository, ReaderRepository>();
-        services.AddScoped<IBorrowRepository, BorrowRepository>();
-
-        services.AddScoped<IBookService, BookService>();
-        services.AddScoped<IReaderService, ReaderService>();
-        services.AddScoped<IBorrowService, BorrowService>();
+        services.AddRabbitMqPublisher(Configuration);
     }
 
 

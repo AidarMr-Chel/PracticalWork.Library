@@ -42,19 +42,25 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
 
         public async Task UpdateAsync(Reader reader)
         {
-            var entity = MapToEntity(reader);
-            _appDbContext.Update(entity);
             await _appDbContext.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<Book>> GetBooksByIdsAsync(IEnumerable<Guid> ids)
+
+        public async Task<IEnumerable<Book>> GetBooksByReaderIdAsync(Guid readerId)
         {
-            var entities = await _appDbContext.Books
-                .Where(b => ids.Contains(b.Id))
+            var bookIds = await _appDbContext.BookBorrows
+                .Where(b => b.ReaderId == readerId && b.Status == BookIssueStatus.Issued)
+                .Select(b => b.BookId)
                 .ToListAsync();
 
-            return entities.Select(MapBookToModel);
+            var books = await _appDbContext.Books
+                .Where(b => bookIds.Contains(b.Id))
+                .ToListAsync();
+
+            return books.Select(MapBookToModel);
         }
+
+
         public async Task<Reader> GetByNameAsync(string fullName)
         {
             var entity = await _appDbContext.Readers
@@ -85,7 +91,7 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
                 IsActive = model.IsActive
             };
 
-        private static Book MapBookToModel(AbstractBookEntity entity) =>
+         private static Book MapBookToModel(AbstractBookEntity entity) =>
             new Book
             {
                 Id = entity.Id,

@@ -8,7 +8,7 @@ namespace PracticalWork.Library.Abstractions.Storage
         Task<Reader> GetByPhoneAsync(string phone);
         Task AddAsync(Reader reader);
         Task UpdateAsync(Reader reader);
-        Task<IEnumerable<Book>> GetBooksByIdsAsync(IEnumerable<Guid> ids);
+        Task<IEnumerable<Book>> GetBooksByReaderIdAsync(Guid readerId);
         Task<Reader> GetByNameAsync(string fullName);
     }
 }

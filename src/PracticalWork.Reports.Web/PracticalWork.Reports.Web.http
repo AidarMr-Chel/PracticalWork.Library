@@ -1,0 +1,6 @@
+@PracticalWork.Reports.Web_HostAddress = http://localhost:5268
+
+GET {{PracticalWork.Reports.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
