@@ -1,14 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PracticalWork.Library.Contracts.v1.Events;
 
 namespace PracticalWork.Library.MessageBroker.Abstractions
 {
+    /// <summary>
+    /// Публикатор событий доменной модели.
+    /// </summary>
     public interface IMessagePublisher
     {
-        Task PublishAsync<T>(T message) where T : class;
+        /// <summary>
+        /// Публикация события в брокер сообщений.
+        /// </summary>
+        /// <param name="evt">Событие, наследующее BaseLibraryEvent</param>
+        Task PublishAsync(BaseLibraryEvent evt);
     }
-
 }

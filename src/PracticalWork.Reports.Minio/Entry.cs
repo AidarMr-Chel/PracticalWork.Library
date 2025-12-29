@@ -4,8 +4,18 @@ using Minio;
 
 namespace PracticalWork.Reports.Minio;
 
+/// <summary>
+/// Точка входа модуля MinIO
+/// </summary>
 public static class Entry
 {
+    /// <summary>
+    /// Добавление зависимостей для работы с MinIO
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="config"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public static IServiceCollection AddMinioModule(this IServiceCollection services, IConfiguration config)
     {
         var endpoint = config["App:Minio:Endpoint"];

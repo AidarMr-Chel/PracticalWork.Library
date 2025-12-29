@@ -12,6 +12,13 @@ public class ActivityLogRepository
         _db = db;
     }
 
+    /// <summary>
+    /// Возвращает логи активности за указанный период с возможностью фильтрации по типу события
+    /// </summary>
+    /// <param name="from"></param>
+    /// <param name="to"></param>
+    /// <param name="eventType"></param>
+    /// <returns></returns>
     public async Task<List<ActivityLog>> GetLogsAsync(DateOnly from, DateOnly to, string? eventType)
     {
         var fromDate = from.ToDateTime(TimeOnly.MinValue).ToUniversalTime();

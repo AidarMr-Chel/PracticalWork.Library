@@ -7,6 +7,9 @@ using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Services
 {
+    /// <summary>
+    /// Сервис управления выдачами книг
+    /// </summary>
     public sealed class BorrowService : IBorrowService
     {
         private readonly IBorrowRepository _borrowRepository;
@@ -32,6 +35,13 @@ namespace PracticalWork.Library.Services
             _publisher = publisher;
         }
 
+        /// <summary>
+        /// Создание выдачи книги
+        /// </summary>
+        /// <param name="bookId"></param>
+        /// <param name="readerId"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task<Guid> CreateBorrow(Guid bookId, Guid readerId)
         {
             var book = await _bookRepository.GetByIdAsync(bookId)
@@ -78,6 +88,12 @@ namespace PracticalWork.Library.Services
             return borrowId;
         }
 
+        /// <summary>
+        /// Возврат книги
+        /// </summary>
+        /// <param name="bookId"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task ReturnBook(Guid bookId)
         {
             var borrow = await _borrowRepository.GetActiveBorrowAsync(bookId)
@@ -103,8 +119,14 @@ namespace PracticalWork.Library.Services
                 ReaderId = borrow.ReaderId,
                 ReturnedAt = DateTime.UtcNow
             });
+
         }
 
+        /// <summary>
+        /// Получение списка доступных книг по фильтру
+        /// </summary>
+        /// <param name="filter"></param>
+        /// <returns></returns>
         public async Task<IEnumerable<Book>> GetAvailableBooksAsync(Book filter)
         {
             var cacheKey =
@@ -123,6 +145,11 @@ namespace PracticalWork.Library.Services
             return available;
         }
 
+        /// <summary>
+        /// Получение выдачи по идентификатору
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<Borrow> GetByIdAsync(Guid id)
         {
             var cacheKey = $"Borrow:{id}";
@@ -141,11 +168,21 @@ namespace PracticalWork.Library.Services
             return borrow;
         }
 
+        /// <summary>
+        /// Получение выдачи по идентификатору читателя
+        /// </summary>
+        /// <param name="readerId"></param>
+        /// <returns></returns>
         public async Task<Borrow> GetByReaderIdAsync(Guid readerId)
         {
             return await _borrowRepository.GetByReaderIdAsync(readerId);
         }
 
+        /// <summary>
+        /// Получение деталей выдачи по идентификатору или читателю
+        /// </summary>
+        /// <param name="idOrReader"></param>
+        /// <returns></returns>
         public async Task<Borrow> GetDetailsAsync(string idOrReader)
         {
             if (Guid.TryParse(idOrReader, out var id))

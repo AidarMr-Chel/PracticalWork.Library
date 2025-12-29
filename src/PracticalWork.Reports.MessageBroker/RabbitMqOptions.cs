@@ -1,5 +1,8 @@
 ﻿namespace PracticalWork.Reports.MessageBroker
 {
+    /// <summary>
+    /// Настройки для подключения к RabbitMQ
+    /// </summary>
     public class RabbitMqOptions
     {
         public string Host { get; set; } = default!;

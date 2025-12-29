@@ -5,6 +5,9 @@ namespace PracticalWork.Library.Controllers.Validations.v1;
 
 public sealed class UpdateBookRequestValidator : AbstractValidator<UpdateBookRequest>
 {
+    /// <summary>
+    /// Конструктор валидатора запроса обновления книги
+    /// </summary>
     public UpdateBookRequestValidator()
     {
         RuleFor(x => x.Title)

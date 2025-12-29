@@ -17,7 +17,12 @@ public class DomainExceptionFilter<TAppException> : IAsyncActionFilter where TAp
     {
         Logger = logger;
     }
-
+    /// <summary>
+    /// Обработка исключений после выполнения действия контроллера
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="next"></param>
+    /// <returns></returns>
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
         var resultContext = await next();
@@ -27,8 +32,18 @@ public class DomainExceptionFilter<TAppException> : IAsyncActionFilter where TAp
         }
     }
 
+    /// <summary>
+    /// Проверка наличия необработанного исключения в контексте
+    /// </summary>
+    /// <param name="context"></param>
+    /// <returns></returns>
     private static bool HasException(ActionExecutedContext context) => context.Exception != null && !context.ExceptionHandled;
 
+    /// <summary>
+    /// Попытка обработать исключение определенного типа
+    /// </summary>
+    /// <param name="context"></param>
+    /// <param name="exception"></param>
     protected virtual void TryHandleException(ActionExecutedContext context, Exception exception)
     {
         if (exception is not TAppException)
@@ -42,6 +57,11 @@ public class DomainExceptionFilter<TAppException> : IAsyncActionFilter where TAp
         Logger.LogError(exception, "Unhandled domain exception. Transformed to Bad request (400).");
     }
 
+    /// <summary>
+    /// Построение объекта ValidationProblemDetails на основе исключения
+    /// </summary>
+    /// <param name="exception"></param>
+    /// <returns></returns>
     protected static ValidationProblemDetails BuildProblemDetails(Exception exception)
     {
         var exceptionName = exception.GetType().Name;

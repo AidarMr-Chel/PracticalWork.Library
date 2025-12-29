@@ -25,7 +25,7 @@ public class ReportsController : ControllerBase
     /// Параметры отчета:
     /// <br/>• <b>From</b> — начало периода
     /// <br/>• <b>To</b> — конец периода
-    /// <br/>• <b>EventType</b> — тип события (опционально)
+    /// <br/>• <b>EventType</b> — тип события
     /// </param>
     /// <returns>Метаданные созданного отчета.</returns>
     /// <response code="200">Отчет успешно создан</response>

@@ -5,6 +5,9 @@ namespace PracticalWork.Library.Controllers.Validations.v1;
 
 public sealed class CreateBookRequestValidator : AbstractValidator<CreateBookRequest>
 {
+    /// <summary>
+    /// Конструктор валидатора запроса на создание книги
+    /// </summary>
     public CreateBookRequestValidator()
     {
         RuleFor(x => x.Title)

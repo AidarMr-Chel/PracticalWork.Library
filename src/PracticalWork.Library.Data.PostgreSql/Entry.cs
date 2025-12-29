@@ -5,6 +5,9 @@ using PracticalWork.Library.Data.PostgreSql.Repositories;
 
 namespace PracticalWork.Library.Data.PostgreSql;
 
+/// <summary>
+/// Точка входа для добавления зависимостей
+/// </summary>
 public static class Entry
 {
     private static readonly Action<DbContextOptionsBuilder> DefaultOptionsAction = (_) => { };

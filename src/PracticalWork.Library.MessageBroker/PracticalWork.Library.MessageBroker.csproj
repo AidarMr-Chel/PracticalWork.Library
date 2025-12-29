@@ -13,4 +13,8 @@
 	  <PackageReference Include="RabbitMQ.Client" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PracticalWork.Library.Contracts\PracticalWork.Library.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

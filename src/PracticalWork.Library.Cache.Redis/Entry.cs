@@ -7,8 +7,11 @@ namespace PracticalWork.Library.Cache.Redis;
 public static class Entry
 {
     /// <summary>
-    /// Регистрация зависимостей для распределенного Cache (Redis)
+    /// Добавляет к сервисам кэширование с использованием Redis
     /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
     public static IServiceCollection AddCache(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddStackExchangeRedisCache(options =>

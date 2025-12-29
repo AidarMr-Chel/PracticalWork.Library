@@ -6,7 +6,7 @@ namespace PracticalWork.Reports.Cache.Redis;
 public static class Entry
 {
     /// <summary>
-    /// Регистрация Redis-кэша для сервиса Reports
+    /// Добавляет к сервисам кэширование отчетов с использованием Redis
     /// </summary>
     public static IServiceCollection AddReportsCache(this IServiceCollection services, IConfiguration configuration)
     {

@@ -7,6 +7,9 @@ using System.Globalization;
 
 namespace PracticalWork.Library.Controllers;
 
+/// <summary>
+/// Точка входа для добавления API приложения
+/// </summary>
 public static class Entry
 {
     /// <summary>
@@ -20,7 +23,10 @@ public static class Entry
 
         return builder;
     }
-
+    /// <summary>
+    /// Добавление валидации
+    /// </summary>
+    /// <param name="services"></param>
     private static void AddValidation(this IServiceCollection services)
     {
         services.AddValidatorsFromAssemblyContaining<CreateBookRequestValidator>();
@@ -29,7 +35,10 @@ public static class Entry
         ValidatorOptions.Global.DisplayNameResolver = (_, member, _) => member?.Name;
         ValidatorOptions.Global.LanguageManager.Culture = CultureInfo.GetCultureInfo("ru");
     }
-
+    /// <summary>
+    /// Добавление версионирования API
+    /// </summary>
+    /// <param name="services"></param>
     private static void AddApiVersioning(this IServiceCollection services)
     {
         services.AddApiVersioning(options =>

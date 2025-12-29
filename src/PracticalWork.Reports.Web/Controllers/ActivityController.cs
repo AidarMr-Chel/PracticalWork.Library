@@ -20,24 +20,20 @@ public class ActivityController : ControllerBase
     }
 
     /// <summary>
-    /// Получение логов активности с фильтрацией и пагинацией.
+    /// Получение логов активности с возможностью фильтрации и пагинации.
     /// </summary>
-    /// <param name="filter">
-    /// Фильтры:
-    /// <br/>• <b>From</b> — дата начала периода
-    /// <br/>• <b>To</b> — дата окончания периода
-    /// <br/>• <b>EventType</b> — тип события
-    /// <br/>• <b>Page</b> — номер страницы (по умолчанию 1)
-    /// <br/>• <b>PageSize</b> — размер страницы (по умолчанию 20)
-    /// </param>
-    /// <returns>
-    /// Объект <see cref="PagedResult{ActivityLogDto}"/> содержащий:
-    /// <br/>• список логов
-    /// <br/>• общее количество записей
-    /// <br/>• номер страницы
-    /// <br/>• размер страницы
-    /// </returns>
-    /// <response code="200">Успешное получение логов активности</response>
+    /// <remarks>
+    /// Если параметры фильтра не указаны, фильтрация не применяется:
+    /// <br/>• <b>From</b> — если не задан, нижняя граница даты не используется
+    /// <br/>• <b>To</b> — если не задан, верхняя граница даты не используется
+    /// <br/>• <b>EventType</b> — если пустой, фильтр по типу события не применяется
+    ///
+    /// Значения по умолчанию:
+    /// <br/>• <b>Page</b> = 1
+    /// <br/>• <b>PageSize</b> = 20
+    /// </remarks>
+    /// <param name="filter">Фильтры для выборки логов активности</param>
+    /// <returns>Страница логов активности</returns>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<ActivityLogDto>), StatusCodes.Status200OK)]
     public async Task<PagedResult<ActivityLogDto>> Get([FromQuery] ActivityLogFilterDto filter)
@@ -76,4 +72,6 @@ public class ActivityController : ControllerBase
             PageSize = filter.PageSize
         };
     }
+
+
 }

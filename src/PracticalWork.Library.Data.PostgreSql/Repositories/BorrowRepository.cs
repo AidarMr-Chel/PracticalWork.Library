@@ -15,6 +15,11 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
             _context = context;
         }
 
+        /// <summary>
+        /// Получает активную выдачу книги по идентификатору книги
+        /// </summary>
+        /// <param name="bookId"></param>
+        /// <returns></returns>
         public async Task<Borrow> GetActiveBorrowAsync(Guid bookId)
         {
             var entity = await _context.BookBorrows
@@ -23,6 +28,11 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
             return entity == null ? null : MapToModel(entity);
         }
 
+        /// <summary>
+        /// Добавляет запись о выдаче книги
+        /// </summary>
+        /// <param name="borrow"></param>
+        /// <returns></returns>
         public async Task<Guid> AddBorrowAsync(Borrow borrow)
         {
             var entity = MapToEntity(borrow);
@@ -31,6 +41,12 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
             return entity.Id;
         }
 
+        /// <summary>
+        /// Обновляет запись о выдаче книги
+        /// </summary>
+        /// <param name="borrow"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task UpdateBorrowAsync(Borrow borrow)
         {
             var entity = await _context.BookBorrows.FirstOrDefaultAsync(b => b.Id == borrow.Id);
@@ -42,7 +58,11 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
             await _context.SaveChangesAsync();
         }
 
-
+        /// <summary>
+        /// Преобразует сущность в модель
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         private static Borrow MapToModel(BookBorrowEntity entity) => new()
         {
             Id = entity.Id,
@@ -54,6 +74,11 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
             Status = entity.Status
         };
 
+        /// <summary>
+        /// Преобразует модель в сущность
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         private static BookBorrowEntity MapToEntity(Borrow model) => new()
         {
             Id = model.Id == Guid.Empty ? Guid.NewGuid() : model.Id,
@@ -64,12 +89,23 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
             ReturnDate = model.ReturnDate,
             Status = model.Status
         };
+
+        /// <summary>
+        /// Получает запись о выдаче книги по идентификатору
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<Borrow> GetByIdAsync(Guid id)
         {
             var entity = await _context.BookBorrows.FirstOrDefaultAsync(b => b.Id == id);
             return entity == null ? null : MapToModel(entity);
         }
 
+        /// <summary>
+        /// Получает последнюю запись о выдаче книги по идентификатору читателя
+        /// </summary>
+        /// <param name="readerId"></param>
+        /// <returns></returns>
         public async Task<Borrow> GetByReaderIdAsync(Guid readerId)
         {
             var entity = await _context.BookBorrows

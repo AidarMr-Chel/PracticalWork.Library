@@ -7,6 +7,9 @@ using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Services
 {
+    /// <summary>
+    /// Сервис для работы с читателями
+    /// </summary>
     public sealed class ReaderService : IReaderService
     {
         private readonly IReaderRepository _readerRepository;
@@ -18,6 +21,12 @@ namespace PracticalWork.Library.Services
             _publisher = publisher;
         }
 
+        /// <summary>
+        /// Создание новой карточки читателя
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task<Guid> CreateReader(Reader reader)
         {
             var existing = await _readerRepository.GetByPhoneAsync(reader.PhoneNumber);
@@ -40,6 +49,13 @@ namespace PracticalWork.Library.Services
             return reader.Id;
         }
 
+        /// <summary>
+        /// Продление карточки читателя
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="newDate"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task ExtendReader(Guid id, DateOnly newDate)
         {
             var reader = await _readerRepository.GetByIdAsync(id)
@@ -55,6 +71,12 @@ namespace PracticalWork.Library.Services
             await _readerRepository.UpdateAsync(reader);
         }
 
+        /// <summary>
+        /// Закрытие карточки читателя
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task CloseReader(Guid id)
         {
             var reader = await _readerRepository.GetByIdAsync(id)
@@ -79,6 +101,12 @@ namespace PracticalWork.Library.Services
             });
         }
 
+        /// <summary>
+        /// Получение книг читателя по идентификатору
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public async Task<IEnumerable<Book>> GetBook(Guid id)
         {
             var reader = await _readerRepository.GetByIdAsync(id)
@@ -90,13 +118,22 @@ namespace PracticalWork.Library.Services
             return await _readerRepository.GetBooksByReaderIdAsync(id);
         }
 
-
+        /// <summary>
+        /// Поиск идентификатора читателя по номеру телефона
+        /// </summary>
+        /// <param name="phone"></param>
+        /// <returns></returns>
         public async Task<Guid?> FindReaderIdByPhoneAsync(string phone)
         {
             var reader = await _readerRepository.GetByPhoneAsync(phone);
             return reader?.Id;
         }
 
+        /// <summary>
+        /// Поиск идентификатора читателя по полному имени
+        /// </summary>
+        /// <param name="fullName"></param>
+        /// <returns></returns>
         public async Task<Guid?> FindReaderIdByNameAsync(string fullName)
         {
             var reader = await _readerRepository.GetByNameAsync(fullName);

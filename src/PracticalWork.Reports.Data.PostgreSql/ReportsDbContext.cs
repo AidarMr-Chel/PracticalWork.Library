@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace PracticalWork.Reports.Data.PostgreSql
 {
+    /// <summary>
+    /// Контекст базы данных для отчетов
+    /// </summary>
     public class ReportsDbContext : DbContext
     {
         public ReportsDbContext(DbContextOptions<ReportsDbContext> options)

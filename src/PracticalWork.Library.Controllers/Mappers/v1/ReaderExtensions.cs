@@ -11,6 +11,11 @@ namespace PracticalWork.Library.Controllers.Mappers.v1
 {
     public static class ReaderExtensions
     {
+        /// <summary>
+        /// Преобразование CreateReaderRequest в Reader
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         public static Reader ToReader(this CreateReaderRequest request) =>
         new()
         {

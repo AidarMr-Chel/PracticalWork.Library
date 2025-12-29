@@ -1,11 +1,15 @@
 ﻿using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
+using PracticalWork.Library.Contracts.v1.Events;
 using PracticalWork.Library.MessageBroker.Abstractions;
 using RabbitMQ.Client;
 
 namespace PracticalWork.Library.MessageBroker.RabbitMQ;
 
+/// <summary>
+/// Публикатор событий в RabbitMQ.
+/// </summary>
 public class RabbitMqMessagePublisher : IMessagePublisher, IDisposable
 {
     private readonly IConnection _connection;
@@ -33,11 +37,16 @@ public class RabbitMqMessagePublisher : IMessagePublisher, IDisposable
         );
     }
 
-    public Task PublishAsync<T>(T message) where T : class
+    /// <summary>
+    /// Публикация события в RabbitMQ.
+    /// </summary>
+    /// <param name="evt">Событие, наследующее BaseLibraryEvent</param>
+    public Task PublishAsync(BaseLibraryEvent evt)
     {
-        var routingKey = typeof(T).Name; // например: BookCreatedEvent
+        var routingKey = evt.EventType;
 
-        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+        var json = JsonSerializer.Serialize(evt);
+        var body = Encoding.UTF8.GetBytes(json);
 
         _channel.BasicPublish(
             exchange: _options.Exchange,

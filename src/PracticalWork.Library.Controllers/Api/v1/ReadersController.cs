@@ -9,6 +9,9 @@ using PracticalWork.Library.Services;
 
 namespace PracticalWork.Library.Controllers.Api.v1
 {
+    /// <summary>
+    /// Контроллер для управления читательскими билетами
+    /// </summary>
     [ApiController]
     [ApiVersion("1")]
     [Route("api/v{version:apiVersion}/readers")]

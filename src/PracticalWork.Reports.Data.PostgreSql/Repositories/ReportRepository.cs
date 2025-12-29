@@ -11,6 +11,11 @@ public class ReportRepository
         _db = db;
     }
 
+    /// <summary>
+    /// Добавляет отчет в хранилище
+    /// </summary>
+    /// <param name="report"></param>
+    /// <returns></returns>
     public async Task AddAsync(Report report)
     {
         _db.Reports.Add(report);

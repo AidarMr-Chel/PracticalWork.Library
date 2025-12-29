@@ -7,6 +7,11 @@ namespace PracticalWork.Library.Controllers.Mappers.v1;
 
 public static class BooksExtensions
 {
+    /// <summary>
+    /// Преобразование CreateBookRequest в Book
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     public static Book ToBook(this CreateBookRequest request) =>
         new()
         {
@@ -19,7 +24,11 @@ public static class BooksExtensions
                 : BookCategory.Default,
             Status = BookStatus.Available
         };
-
+    /// <summary>
+    /// Преобразование UpdateBookRequest в Book
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     public static Book ToBook(this UpdateBookRequest request) =>
         new()
         {
@@ -35,7 +44,11 @@ public static class BooksExtensions
                 : BookStatus.Available,
             CoverImagePath = request.CoverImagePath
         };
-
+    /// <summary>
+    /// Преобразование BookFilterRequest в Book
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     public static Book ToBook(this BookFilterRequest request) =>
         new()
         {

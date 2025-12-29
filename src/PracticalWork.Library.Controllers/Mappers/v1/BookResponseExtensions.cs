@@ -6,6 +6,12 @@ namespace PracticalWork.Library.Controllers.Mappers.v1
 {
     public static class BookResponseExtensions
     {
+        /// <summary>
+        /// Преобразование книги в ответ с деталями
+        /// </summary>
+        /// <param name="book"></param>
+        /// <param name="isBorrowed"></param>
+        /// <returns></returns>
         public static BookDetailsResponse ToDetailsResponse(this Book book, bool isBorrowed = false)
         {
             return new BookDetailsResponse(

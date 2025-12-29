@@ -6,6 +6,9 @@ using PracticalWork.Library.MessageBroker.Abstractions;
 using PracticalWork.Library.Models;
 using PracticalWork.Library.Contracts.v1.Events.Books;
 
+/// <summary>
+/// Сервис управления книгами
+/// </summary>
 public sealed class BookService : IBookService
 {
     private readonly IBookRepository _bookRepository;
@@ -28,6 +31,11 @@ public sealed class BookService : IBookService
         _publisher = publisher;
     }
 
+    /// <summary>
+    /// Создание новой книги
+    /// </summary>
+    /// <param name="book"></param>
+    /// <returns></returns>
     public async Task<Guid> CreateBook(Book book)
     {
         book.Status = BookStatus.Available;
@@ -44,6 +52,13 @@ public sealed class BookService : IBookService
         return id;
     }
 
+    /// <summary>
+    /// Обновление книги по идентификатору
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="book"></param>
+    /// <returns></returns>
+    /// <exception cref="BookServiceException"></exception>
     public async Task UpdateBook(Guid id, Book book)
     {
         var existing = await _bookRepository.GetByIdAsync(id)
@@ -59,6 +74,12 @@ public sealed class BookService : IBookService
         await _cache.RemoveAsync($"Book:{id}:Details");
     }
 
+    /// <summary>
+    /// Архивирование книги по идентификатору
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="BookServiceException"></exception>
     public async Task<Book> ArchivingBook(Guid id)
     {
         var book = await _bookRepository.GetByIdAsync(id)
@@ -78,6 +99,13 @@ public sealed class BookService : IBookService
         return book;
     }
 
+    /// <summary>
+    /// Получение списка книг по фильтру
+    /// </summary>
+    /// <param name="filter"></param>
+    /// <param name="pageNumber"></param>
+    /// <param name="pageSize"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Book>> GetBooks(Book filter, int pageNumber = 1, int pageSize = 10)
     {
         var cacheKey = $"Books:{filter.Category}:{filter.Status}:{string.Join(",", filter.Authors ?? new List<string>())}:{filter.Year}:Page{pageNumber}:Size{pageSize}";
@@ -99,6 +127,12 @@ public sealed class BookService : IBookService
         return paged;
     }
 
+    /// <summary>
+    /// Получение деталей о книге
+    /// </summary>
+    /// <param name="bookId"></param>
+    /// <returns></returns>
+    /// <exception cref="BookServiceException"></exception>
     public async Task<Book> GetBookDetailsAsync(Guid bookId)
     {
         var cacheKey = $"Book:{bookId}:Details";
@@ -116,6 +150,16 @@ public sealed class BookService : IBookService
         return book;
     }
 
+    /// <summary>
+    /// Добавление деталей о книге
+    /// </summary>
+    /// <param name="bookId"></param>
+    /// <param name="description"></param>
+    /// <param name="coverStream"></param>
+    /// <param name="fileName"></param>
+    /// <param name="contentType"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public async Task UpdateBookDetailsAsync(Guid bookId, string description, Stream coverStream, string fileName, string contentType)
     {
         var book = await _bookRepository.GetByIdAsync(bookId)

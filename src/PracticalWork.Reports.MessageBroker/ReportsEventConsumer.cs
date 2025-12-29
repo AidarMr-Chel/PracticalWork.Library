@@ -10,6 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace PracticalWork.Reports.MessageBroker
 {
+    /// <summary>
+    /// Потребитель событий для отчетов
+    /// </summary>
     public class ReportsEventConsumer : BackgroundService
     {
         private readonly IServiceProvider _provider;
@@ -17,6 +20,11 @@ namespace PracticalWork.Reports.MessageBroker
         private IConnection _connection;
         private IModel _channel;
 
+        /// <summary>
+        /// Конструктор потребителя событий для отчетов
+        /// </summary>
+        /// <param name="provider"></param>
+        /// <param name="options"></param>
         public ReportsEventConsumer(IServiceProvider provider, IOptions<RabbitMqOptions> options)
         {
             _provider = provider;
@@ -49,6 +57,11 @@ namespace PracticalWork.Reports.MessageBroker
                 routingKey: "#");
         }
 
+        /// <summary>
+        /// Основной метод для обработки сообщений из очереди
+        /// </summary>
+        /// <param name="stoppingToken"></param>
+        /// <returns></returns>
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var consumer = new EventingBasicConsumer(_channel);

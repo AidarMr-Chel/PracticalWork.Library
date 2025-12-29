@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace PracticalWork.Library.MessageBroker.RabbitMQ
 {
+    /// <summary>
+    /// Настройки подключения к RabbitMQ
+    /// </summary>
     public class RabbitMqOptions
     {
         public string Host { get; set; } = default!;

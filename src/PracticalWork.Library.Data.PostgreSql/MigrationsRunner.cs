@@ -4,11 +4,15 @@ using Microsoft.Extensions.Logging;
 
 namespace PracticalWork.Library.Data.PostgreSql;
 
-/// <summary>
-/// Класс для применения миграций БД
-/// </summary>
 public static class MigrationsRunner
 {
+    /// <summary>
+    /// Применяет миграции к базе данных
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="serviceProvider"></param>
+    /// <param name="appName"></param>
+    /// <returns></returns>
     public static async Task ApplyMigrations(ILogger logger, IServiceProvider serviceProvider, string appName)
     {
         var operationId = Guid.NewGuid().ToString()[..4];

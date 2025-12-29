@@ -15,6 +15,11 @@ public sealed class BookRepository : IBookRepository
         _context = context;
     }
 
+    /// <summary>
+    /// Добавляет книгу в хранилище
+    /// </summary>
+    /// <param name="book"></param>
+    /// <returns></returns>
     public async Task<Guid> AddAsync(Book book)
     {
         var entity = MapBookToEntity(book);
@@ -23,12 +28,23 @@ public sealed class BookRepository : IBookRepository
         return entity.Id;
     }
 
+    /// <summary>
+    /// Получает книгу по идентификатору
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<Book> GetByIdAsync(Guid id)
     {
         var entity = await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
         return entity is null ? null : MapEntityToBook(entity);
     }
 
+    /// <summary>
+    /// Обновляет информацию о книге
+    /// </summary>
+    /// <param name="book"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     public async Task UpdateAsync(Book book)
     {
         var entity = await _context.Books.FirstOrDefaultAsync(b => b.Id == book.Id);
@@ -40,6 +56,11 @@ public sealed class BookRepository : IBookRepository
         await _context.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Находит книги по фильтру
+    /// </summary>
+    /// <param name="filter"></param>
+    /// <returns></returns>
     public async Task<IEnumerable<Book>> FindAsync(Book filter)
     {
         var query = _context.Books.AsQueryable();
@@ -66,6 +87,12 @@ public sealed class BookRepository : IBookRepository
         return entities.Select(MapEntityToBook);
     }
 
+    /// <summary>
+    /// Преобразует модель книги в сущность для хранения
+    /// </summary>
+    /// <param name="book"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     private static AbstractBookEntity MapBookToEntity(Book book)
     {
         AbstractBookEntity entity = book.Category switch
@@ -80,6 +107,11 @@ public sealed class BookRepository : IBookRepository
         return entity;
     }
 
+    /// <summary>
+    /// Копирует свойства модели книги в сущность для хранения
+    /// </summary>
+    /// <param name="book"></param>
+    /// <param name="entity"></param>
     private static void MapBookToEntity(Book book, AbstractBookEntity entity)
     {
         entity.Id = book.Id == Guid.Empty ? Guid.NewGuid() : book.Id;
@@ -93,6 +125,12 @@ public sealed class BookRepository : IBookRepository
             entity.CoverImagePath = book.CoverImagePath;
     }
 
+    /// <summary>
+    /// Преобразует сущность книги в модель
+    /// </summary>
+    /// <param name="entity"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
     private static Book MapEntityToBook(AbstractBookEntity entity) => new()
     {
         Id = entity.Id,

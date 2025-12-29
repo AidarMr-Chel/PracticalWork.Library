@@ -8,6 +8,12 @@ namespace PracticalWork.Library.Data.Minio
 {
     public static class Entry
     {
+        /// <summary>
+        /// Добавляет к сервисам хранилище файлов Minio
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
         public static IServiceCollection AddMinioFileStorage(this IServiceCollection services, IConfiguration configuration)
         {
             var endpoint = configuration["App:Minio:Endpoint"];

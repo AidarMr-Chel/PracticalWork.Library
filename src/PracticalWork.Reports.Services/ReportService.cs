@@ -9,6 +9,9 @@ using PracticalWork.Reports.Minio;
 
 namespace PracticalWork.Reports.Services;
 
+/// <summary>
+/// Сервис для работы с отчетами
+/// </summary>
 public class ReportService
 {
     private readonly ActivityLogRepository _activityRepo;
@@ -28,6 +31,11 @@ public class ReportService
         _cache = cache;
     }
 
+    /// <summary>
+    /// Генерирует отчет за указанный период с возможностью фильтрации по типу события
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     public async Task<ReportDto> GenerateReportAsync(GenerateReportRequest request)
     {
         var logs = await _activityRepo.GetLogsAsync(request.From, request.To, request.EventType);
@@ -63,6 +71,11 @@ public class ReportService
         };
     }
 
+    /// <summary>
+    /// Генерирует CSV из логов активности
+    /// </summary>
+    /// <param name="logs"></param>
+    /// <returns></returns>
     private byte[] GenerateCsv(IEnumerable<ActivityLog> logs)
     {
         var sb = new StringBuilder();
@@ -76,7 +89,10 @@ public class ReportService
         return Encoding.UTF8.GetBytes(sb.ToString());
     }
 
-
+    /// <summary>
+    /// Возвращает список доступных отчетов
+    /// </summary>
+    /// <returns></returns>
     public async Task<List<ReportInfoDto>> GetReportsAsync()
     {
         var cached = await _cache.GetAsync<List<ReportInfoDto>>("reports:list");
@@ -100,8 +116,15 @@ public class ReportService
         return reports;
     }
 
+    /// <summary>
+    /// Возвращает URL для скачивания отчета по имени
+    /// </summary>
+    /// <param name="reportName"></param>
+    /// <returns></returns>
+    /// <exception cref="FileNotFoundException"></exception>
     public async Task<string> GetDownloadUrlAsync(string reportName)
     {
+
         var objects = await _minio.ListAsync("reports");
 
         var file = objects.FirstOrDefault(o =>
@@ -112,6 +135,4 @@ public class ReportService
 
         return await _minio.GetSignedUrlAsync(file.Key, TimeSpan.FromMinutes(10));
     }
-
-
 }
