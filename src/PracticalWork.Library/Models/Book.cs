@@ -3,72 +3,86 @@
 namespace PracticalWork.Library.Models;
 
 /// <summary>
-/// Книга
+/// Модель книги в библиотечной системе.
+/// Содержит основную информацию о книге, её статусе и возможных операциях.
 /// </summary>
 public sealed class Book
 {
     /// <summary>
-    /// Идентификатор книги
+    /// Уникальный идентификатор книги.
     /// </summary>
     public Guid Id { get; set; }
+
     /// <summary>
-    /// Название книги
+    /// Название книги.
     /// </summary>
     public string Title { get; set; }
+
     /// <summary>
-    /// Авторы книги
+    /// Список авторов книги.
     /// </summary>
     public IReadOnlyList<string> Authors { get; set; }
+
     /// <summary>
-    /// Описание книги
+    /// Описание книги.
     /// </summary>
     public string Description { get; set; }
+
     /// <summary>
-    /// Год издания
+    /// Год издания книги.
     /// </summary>
     public int Year { get; set; }
+
     /// <summary>
-    /// Категория книги
+    /// Категория книги.
     /// </summary>
     public BookCategory Category { get; set; }
+
     /// <summary>
-    /// Статус книги
+    /// Текущий статус книги.
     /// </summary>
     public BookStatus Status { get; set; }
+
     /// <summary>
-    /// Путь к обложке книги
+    /// Путь к файлу обложки книги.
     /// </summary>
     public string CoverImagePath { get; set; }
+
     /// <summary>
-    /// Флаг архивирования книги
+    /// Признак того, что книга заархивирована.
     /// </summary>
     public bool IsArchived { get; set; }
+
     /// <summary>
-    /// Проверка возможности архивирования книги
+    /// Проверяет, может ли книга быть заархивирована.
     /// </summary>
-    /// <returns></returns>
+    /// <returns><c>true</c>, если книга не выдана; иначе <c>false</c>.</returns>
     public bool CanBeArchived() => Status != BookStatus.Borrow;
+
     /// <summary>
-    /// Проверка возможности взятия книги в аренду
+    /// Проверяет, доступна ли книга для выдачи.
     /// </summary>
-    /// <returns></returns>
+    /// <returns><c>true</c>, если книга не в архиве и имеет статус <see cref="BookStatus.Available"/>.</returns>
     public bool CanBeBorrowed() => !IsArchived && Status == BookStatus.Available;
+
     /// <summary>
-    /// Архивирование книги
+    /// Переводит книгу в архив.
     /// </summary>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <exception cref="InvalidOperationException">Выбрасывается, если книга не может быть заархивирована.</exception>
     public void Archive()
     {
         if (!CanBeArchived())
             throw new InvalidOperationException("Книга не может быть заархивирована.");
+
         IsArchived = true;
         Status = BookStatus.Archived;
     }
+
     /// <summary>
-    /// Обновление деталей книги
+    /// Обновляет описание и путь к обложке книги.
     /// </summary>
-    /// <param name="description"></param>
-    /// <param name="coverImagePath"></param>
+    /// <param name="description">Новое описание книги.</param>
+    /// <param name="coverImagePath">Новый путь к файлу обложки.</param>
     public void UpdateDetails(string description, string coverImagePath)
     {
         Description = description;

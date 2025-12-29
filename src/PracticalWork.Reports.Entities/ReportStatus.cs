@@ -1,11 +1,23 @@
-﻿namespace PracticalWork.Reports.Entities;
-
-/// <summary>
-/// Статус отчета
-/// </summary>
-public enum ReportStatus
+﻿namespace PracticalWork.Reports.Entities
 {
-    InProgress = 0,
-    Completed = 1,
-    Error = 2
+    /// <summary>
+    /// Статус отчёта, отражающий текущее состояние процесса его формирования.
+    /// </summary>
+    public enum ReportStatus
+    {
+        /// <summary>
+        /// Отчёт находится в процессе формирования.
+        /// </summary>
+        InProgress = 0,
+
+        /// <summary>
+        /// Отчёт успешно сформирован и готов к использованию.
+        /// </summary>
+        Completed = 1,
+
+        /// <summary>
+        /// При формировании отчёта произошла ошибка.
+        /// </summary>
+        Error = 2
+    }
 }

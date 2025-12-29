@@ -5,17 +5,21 @@ using PracticalWork.Library.Data.PostgreSql.Entities;
 namespace PracticalWork.Library.Data.PostgreSql;
 
 /// <summary>
-/// Контекст базы данных приложения
+/// Контекст базы данных приложения.
+/// Определяет наборы сущностей и конфигурацию моделей,
+/// а также автоматически обновляет поле UpdatedAt при изменении сущностей.
 /// </summary>
 public sealed class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
+
     /// <summary>
-    /// Конфигурация модели базы данных
+    /// Конфигурирует модель базы данных.
+    /// Автоматически применяет все конфигурации из текущей сборки.
     /// </summary>
-    /// <param name="builder"></param>
+    /// <param name="builder">Построитель модели.</param>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -24,20 +28,31 @@ public sealed class AppDbContext : DbContext
 
     #region Set UpdateDate on SaveChanges
 
-    // Данные перегрузки выбраны потому, что оставшиеся две вызывают эти методы:
 
+    /// <summary>
+    /// Сохраняет изменения и обновляет поле UpdatedAt у изменённых сущностей.
+    /// </summary>
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         SetUpdateDates();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Асинхронно сохраняет изменения и обновляет поле UpdatedAt у изменённых сущностей.
+    /// </summary>
+    public override Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
     {
         SetUpdateDates();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
+    /// <summary>
+    /// Устанавливает текущее время в поле UpdatedAt для всех изменённых сущностей,
+    /// реализующих интерфейс <see cref="IEntity"/>.
+    /// </summary>
     private void SetUpdateDates()
     {
         var updateDate = DateTime.UtcNow;
@@ -54,10 +69,21 @@ public sealed class AppDbContext : DbContext
 
     #endregion
 
+    /// <summary>Набор всех книг (базовый тип).</summary>
     internal DbSet<AbstractBookEntity> Books { get; set; }
+
+    /// <summary>Набор учебных пособий.</summary>
     internal DbSet<EducationalBookEntity> EducationalBooks { get; set; }
+
+    /// <summary>Набор художественных книг.</summary>
     internal DbSet<FictionBookEntity> FictionBooks { get; set; }
+
+    /// <summary>Набор научных книг.</summary>
     internal DbSet<ScientificBookEntity> ScientificBooks { get; set; }
+
+    /// <summary>Набор читателей.</summary>
     internal DbSet<ReaderEntity> Readers { get; set; }
+
+    /// <summary>Набор записей о выдаче книг.</summary>
     internal DbSet<BookBorrowEntity> BookBorrows { get; set; }
 }

@@ -7,7 +7,9 @@ using PracticalWork.Library.Models;
 using PracticalWork.Library.Contracts.v1.Events.Books;
 
 /// <summary>
-/// Сервис управления книгами
+/// Сервис управления книгами.
+/// Отвечает за создание, обновление, архивирование,
+/// получение списка и деталей книг, а также работу с кэшем и событиями.
 /// </summary>
 public sealed class BookService : IBookService
 {
@@ -32,16 +34,17 @@ public sealed class BookService : IBookService
     }
 
     /// <summary>
-    /// Создание новой книги
+    /// Создаёт новую книгу и публикует событие о её создании.
     /// </summary>
-    /// <param name="book"></param>
-    /// <returns></returns>
+    /// <param name="book">Модель книги.</param>
+    /// <returns>Идентификатор созданной книги.</returns>
     public async Task<Guid> CreateBook(Book book)
     {
         book.Status = BookStatus.Available;
         var id = await _bookRepository.AddAsync(book);
 
         await _cache.ClearByRegistryAsync(BooksRegistry);
+
         await _publisher.PublishAsync(new BookCreatedEvent
         {
             BookId = id,
@@ -49,16 +52,17 @@ public sealed class BookService : IBookService
             Category = book.Category.ToString(),
             CreatedAt = DateTime.UtcNow
         });
+
         return id;
     }
 
     /// <summary>
-    /// Обновление книги по идентификатору
+    /// Обновляет данные книги по её идентификатору.
+    /// Категория книги изменению не подлежит.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="book"></param>
-    /// <returns></returns>
-    /// <exception cref="BookServiceException"></exception>
+    /// <param name="id">Идентификатор книги.</param>
+    /// <param name="book">Обновлённые данные книги.</param>
+    /// <exception cref="BookServiceException">Если книга не найдена или категория изменена.</exception>
     public async Task UpdateBook(Guid id, Book book)
     {
         var existing = await _bookRepository.GetByIdAsync(id)
@@ -75,11 +79,11 @@ public sealed class BookService : IBookService
     }
 
     /// <summary>
-    /// Архивирование книги по идентификатору
+    /// Архивирует книгу по её идентификатору и публикует событие архивирования.
     /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    /// <exception cref="BookServiceException"></exception>
+    /// <param name="id">Идентификатор книги.</param>
+    /// <returns>Обновлённая модель книги.</returns>
+    /// <exception cref="BookServiceException">Если книга не найдена.</exception>
     public async Task<Book> ArchivingBook(Guid id)
     {
         var book = await _bookRepository.GetByIdAsync(id)
@@ -90,6 +94,7 @@ public sealed class BookService : IBookService
 
         await _cache.ClearByRegistryAsync(BooksRegistry);
         await _cache.RemoveAsync($"Book:{id}:Details");
+
         await _publisher.PublishAsync(new BookArchivedEvent
         {
             BookId = id,
@@ -100,15 +105,17 @@ public sealed class BookService : IBookService
     }
 
     /// <summary>
-    /// Получение списка книг по фильтру
+    /// Возвращает список книг, удовлетворяющих фильтру.
+    /// Поддерживает пагинацию и кэширование результатов.
     /// </summary>
-    /// <param name="filter"></param>
-    /// <param name="pageNumber"></param>
-    /// <param name="pageSize"></param>
-    /// <returns></returns>
+    /// <param name="filter">Фильтр по свойствам книги.</param>
+    /// <param name="pageNumber">Номер страницы (по умолчанию 1).</param>
+    /// <param name="pageSize">Размер страницы (по умолчанию 10).</param>
+    /// <returns>Коллекция книг.</returns>
     public async Task<IEnumerable<Book>> GetBooks(Book filter, int pageNumber = 1, int pageSize = 10)
     {
-        var cacheKey = $"Books:{filter.Category}:{filter.Status}:{string.Join(",", filter.Authors ?? new List<string>())}:{filter.Year}:Page{pageNumber}:Size{pageSize}";
+        var cacheKey =
+            $"Books:{filter.Category}:{filter.Status}:{string.Join(",", filter.Authors ?? new List<string>())}:{filter.Year}:Page{pageNumber}:Size{pageSize}";
 
         var cached = await _cache.GetAsync<IEnumerable<Book>>(cacheKey);
         if (cached != null)
@@ -128,11 +135,12 @@ public sealed class BookService : IBookService
     }
 
     /// <summary>
-    /// Получение деталей о книге
+    /// Возвращает подробную информацию о книге.
+    /// Использует кэширование для ускорения повторных запросов.
     /// </summary>
-    /// <param name="bookId"></param>
-    /// <returns></returns>
-    /// <exception cref="BookServiceException"></exception>
+    /// <param name="bookId">Идентификатор книги.</param>
+    /// <returns>Модель книги.</returns>
+    /// <exception cref="BookServiceException">Если книга не найдена.</exception>
     public async Task<Book> GetBookDetailsAsync(Guid bookId)
     {
         var cacheKey = $"Book:{bookId}:Details";
@@ -151,15 +159,15 @@ public sealed class BookService : IBookService
     }
 
     /// <summary>
-    /// Добавление деталей о книге
+    /// Обновляет описание и обложку книги.
+    /// Выполняет валидацию файла и загружает обложку в MinIO.
     /// </summary>
-    /// <param name="bookId"></param>
-    /// <param name="description"></param>
-    /// <param name="coverStream"></param>
-    /// <param name="fileName"></param>
-    /// <param name="contentType"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <param name="bookId">Идентификатор книги.</param>
+    /// <param name="description">Новое описание книги.</param>
+    /// <param name="coverStream">Поток файла обложки.</param>
+    /// <param name="fileName">Имя файла обложки.</param>
+    /// <param name="contentType">MIME‑тип файла.</param>
+    /// <exception cref="InvalidOperationException">Если файл некорректен или книга не найдена.</exception>
     public async Task UpdateBookDetailsAsync(Guid bookId, string description, Stream coverStream, string fileName, string contentType)
     {
         var book = await _bookRepository.GetByIdAsync(bookId)

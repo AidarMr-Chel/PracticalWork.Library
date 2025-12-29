@@ -8,7 +8,9 @@ using PracticalWork.Library.Models;
 namespace PracticalWork.Library.Services
 {
     /// <summary>
-    /// Сервис управления выдачами книг
+    /// Сервис управления выдачами книг.
+    /// Отвечает за создание, возврат, получение доступных книг,
+    /// а также получение информации о выдачах.
     /// </summary>
     public sealed class BorrowService : IBorrowService
     {
@@ -36,12 +38,13 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Создание выдачи книги
+        /// Создаёт новую выдачу книги читателю.
+        /// Выполняет проверки статуса книги и активности читателя.
         /// </summary>
-        /// <param name="bookId"></param>
-        /// <param name="readerId"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="bookId">Идентификатор книги.</param>
+        /// <param name="readerId">Идентификатор читателя.</param>
+        /// <returns>Идентификатор созданной выдачи.</returns>
+        /// <exception cref="InvalidOperationException">Если книга или читатель недоступны.</exception>
         public async Task<Guid> CreateBorrow(Guid bookId, Guid readerId)
         {
             var book = await _bookRepository.GetByIdAsync(bookId)
@@ -76,6 +79,7 @@ namespace PracticalWork.Library.Services
 
             await _cache.ClearByRegistryAsync(BorrowKeysRegistry);
             await _cache.ClearByRegistryAsync(AvailableBooksKeysRegistry);
+
             await _publisher.PublishAsync(new BookBorrowedEvent
             {
                 BorrowId = borrowId,
@@ -89,11 +93,11 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Возврат книги
+        /// Регистрирует возврат книги.
+        /// Обновляет статус выдачи и книги, публикует событие.
         /// </summary>
-        /// <param name="bookId"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="bookId">Идентификатор книги.</param>
+        /// <exception cref="InvalidOperationException">Если активная выдача не найдена.</exception>
         public async Task ReturnBook(Guid bookId)
         {
             var borrow = await _borrowRepository.GetActiveBorrowAsync(bookId)
@@ -112,6 +116,7 @@ namespace PracticalWork.Library.Services
 
             await _cache.ClearByRegistryAsync(BorrowKeysRegistry);
             await _cache.ClearByRegistryAsync(AvailableBooksKeysRegistry);
+
             await _publisher.PublishAsync(new BookReturnedEvent
             {
                 BorrowId = borrow.Id,
@@ -119,14 +124,14 @@ namespace PracticalWork.Library.Services
                 ReaderId = borrow.ReaderId,
                 ReturnedAt = DateTime.UtcNow
             });
-
         }
 
         /// <summary>
-        /// Получение списка доступных книг по фильтру
+        /// Возвращает список доступных книг по указанному фильтру.
+        /// Использует кэширование для ускорения повторных запросов.
         /// </summary>
-        /// <param name="filter"></param>
-        /// <returns></returns>
+        /// <param name="filter">Фильтр по свойствам книги.</param>
+        /// <returns>Коллекция доступных книг.</returns>
         public async Task<IEnumerable<Book>> GetAvailableBooksAsync(Book filter)
         {
             var cacheKey =
@@ -146,10 +151,11 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Получение выдачи по идентификатору
+        /// Возвращает выдачу по её идентификатору.
+        /// Использует кэширование.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <param name="id">Идентификатор выдачи.</param>
+        /// <returns>Модель выдачи или null.</returns>
         public async Task<Borrow> GetByIdAsync(Guid id)
         {
             var cacheKey = $"Borrow:{id}";
@@ -169,20 +175,20 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Получение выдачи по идентификатору читателя
+        /// Возвращает выдачу по идентификатору читателя.
         /// </summary>
-        /// <param name="readerId"></param>
-        /// <returns></returns>
+        /// <param name="readerId">Идентификатор читателя.</param>
+        /// <returns>Модель выдачи.</returns>
         public async Task<Borrow> GetByReaderIdAsync(Guid readerId)
         {
             return await _borrowRepository.GetByReaderIdAsync(readerId);
         }
 
         /// <summary>
-        /// Получение деталей выдачи по идентификатору или читателю
+        /// Возвращает детали выдачи по идентификатору выдачи или полному имени читателя.
         /// </summary>
-        /// <param name="idOrReader"></param>
-        /// <returns></returns>
+        /// <param name="idOrReader">Идентификатор выдачи или ФИО читателя.</param>
+        /// <returns>Модель выдачи или null.</returns>
         public async Task<Borrow> GetDetailsAsync(string idOrReader)
         {
             if (Guid.TryParse(idOrReader, out var id))

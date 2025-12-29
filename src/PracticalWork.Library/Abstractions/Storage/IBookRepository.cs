@@ -1,34 +1,38 @@
-﻿using PracticalWork.Library;
-using PracticalWork.Library.Models;
+﻿using PracticalWork.Library.Models;
 
-namespace PracticalWork.Library.Abstractions.Storage;
-
-public interface IBookRepository
+namespace PracticalWork.Library.Abstractions.Storage
 {
     /// <summary>
-    /// Добавление книги
+    /// Репозиторий для управления сущностями книг.
+    /// Определяет операции добавления, получения, обновления и поиска книг.
     /// </summary>
-    /// <param name="book"></param>
-    /// <returns></returns>
-    Task<Guid> AddAsync(Book book);
-    /// <summary>
-    /// Получение книги по идентификатору
-    /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    Task<Book> GetByIdAsync(Guid id);
-    /// <summary>
-    /// Обновление книги
-    /// </summary>
-    /// <param name="book"></param>
-    /// <returns></returns>
-    Task UpdateAsync(Book book);
-    /// <summary>
-    /// Поиск книг по фильтру
-    /// </summary>
-    /// <param name="filter"></param>
-    /// <returns></returns>
-    Task<IEnumerable<Book>> FindAsync(Book filter);
+    public interface IBookRepository
+    {
+        /// <summary>
+        /// Добавляет новую книгу в хранилище.
+        /// </summary>
+        /// <param name="book">Модель книги для добавления.</param>
+        /// <returns>Идентификатор созданной книги.</returns>
+        Task<Guid> AddAsync(Book book);
+
+        /// <summary>
+        /// Возвращает книгу по её идентификатору.
+        /// </summary>
+        /// <param name="id">Идентификатор книги.</param>
+        /// <returns>Модель книги.</returns>
+        Task<Book> GetByIdAsync(Guid id);
+
+        /// <summary>
+        /// Обновляет данные существующей книги.
+        /// </summary>
+        /// <param name="book">Модель книги с обновлёнными данными.</param>
+        Task UpdateAsync(Book book);
+
+        /// <summary>
+        /// Выполняет поиск книг по указанному фильтру.
+        /// </summary>
+        /// <param name="filter">Фильтр по свойствам книги.</param>
+        /// <returns>Коллекция найденных книг.</returns>
+        Task<IEnumerable<Book>> FindAsync(Book filter);
+    }
 }
-
-

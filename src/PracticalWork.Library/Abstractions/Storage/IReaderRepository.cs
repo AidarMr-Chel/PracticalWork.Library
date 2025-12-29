@@ -2,43 +2,51 @@
 
 namespace PracticalWork.Library.Abstractions.Storage
 {
+    /// <summary>
+    /// Репозиторий для управления сущностями читателей.
+    /// Определяет операции получения, добавления, обновления
+    /// и выборки связанных данных.
+    /// </summary>
     public interface IReaderRepository
     {
         /// <summary>
-        /// Получение читателя по идентификатору
+        /// Возвращает читателя по его идентификатору.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <param name="id">Идентификатор читателя.</param>
+        /// <returns>Модель читателя.</returns>
         Task<Reader> GetByIdAsync(Guid id);
+
         /// <summary>
-        /// Получение читателя по номеру телефона
+        /// Возвращает читателя по номеру телефона.
         /// </summary>
-        /// <param name="phone"></param>
-        /// <returns></returns>
+        /// <param name="phone">Номер телефона читателя.</param>
+        /// <returns>Модель читателя.</returns>
         Task<Reader> GetByPhoneAsync(string phone);
+
         /// <summary>
-        /// Добавление читателя
+        /// Добавляет нового читателя в хранилище.
         /// </summary>
-        /// <param name="reader"></param>
-        /// <returns></returns>
+        /// <param name="reader">Модель читателя.</param>
         Task AddAsync(Reader reader);
+
         /// <summary>
-        /// Обновление читателя
+        /// Обновляет данные существующего читателя.
         /// </summary>
-        /// <param name="reader"></param>
-        /// <returns></returns>
+        /// <param name="reader">Модель читателя с обновлёнными данными.</param>
         Task UpdateAsync(Reader reader);
+
         /// <summary>
-        /// Получение книг читателя по идентификатору
+        /// Возвращает список книг, выданных указанному читателю.
         /// </summary>
-        /// <param name="readerId"></param>
-        /// <returns></returns>
+        /// <param name="readerId">Идентификатор читателя.</param>
+        /// <returns>Коллекция книг.</returns>
         Task<IEnumerable<Book>> GetBooksByReaderIdAsync(Guid readerId);
+
         /// <summary>
-        /// Получение читателя по полному имени
+        /// Возвращает читателя по его полному имени.
         /// </summary>
-        /// <param name="fullName"></param>
-        /// <returns></returns>
+        /// <param name="fullName">Полное имя читателя.</param>
+        /// <returns>Модель читателя.</returns>
         Task<Reader> GetByNameAsync(string fullName);
     }
 }

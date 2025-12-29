@@ -1,38 +1,48 @@
 ﻿/// <summary>
-/// Ответ с деталями выдачи книги
+/// Ответ с детальной информацией о выдаче книги.
+/// Содержит сведения о сроках, статусе, связанных сущностях
+/// и ссылку на обложку книги.
 /// </summary>
 public sealed class BorrowDetailsResponse
 {
     /// <summary>
-    /// Идентификатор выдачи
+    /// Уникальный идентификатор выдачи.
     /// </summary>
     public Guid Id { get; set; }
+
     /// <summary>
-    /// Идентификатор книги
+    /// Идентификатор книги, которая была выдана.
     /// </summary>
     public Guid BookId { get; set; }
+
     /// <summary>
-    /// Идентификатор читателя
+    /// Идентификатор читателя, которому выдана книга.
     /// </summary>
     public Guid ReaderId { get; set; }
+
     /// <summary>
-    /// Дата выдачи
+    /// Дата выдачи книги.
     /// </summary>
     public DateOnly BorrowDate { get; set; }
+
     /// <summary>
-    /// Дата возврата
+    /// Дата, к которой книга должна быть возвращена.
     /// </summary>
     public DateOnly DueDate { get; set; }
+
     /// <summary>
-    /// Дата фактического возврата
+    /// Фактическая дата возврата книги.
+    /// Может быть пустой, если книга ещё не возвращена.
     /// </summary>
     public DateOnly? ReturnDate { get; set; }
+
     /// <summary>
-    /// Статус выдачи
+    /// Текущий статус выдачи.
     /// </summary>
     public string Status { get; set; } = string.Empty;
+
     /// <summary>
-    /// Название книги
+    /// URL обложки книги.
     /// </summary>
     public string CoverUrl { get; set; }
 }

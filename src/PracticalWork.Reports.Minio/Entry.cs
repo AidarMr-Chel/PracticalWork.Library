@@ -5,17 +5,22 @@ using Minio;
 namespace PracticalWork.Reports.Minio;
 
 /// <summary>
-/// Точка входа модуля MinIO
+/// Точка входа модуля MinIO.
+/// Содержит методы для регистрации клиента MinIO и сервисов,
+/// обеспечивающих работу с объектным хранилищем.
 /// </summary>
 public static class Entry
 {
     /// <summary>
-    /// Добавление зависимостей для работы с MinIO
+    /// Регистрирует зависимости, необходимые для работы с MinIO.
+    /// Настройки подключения берутся из конфигурации приложения.
     /// </summary>
-    /// <param name="services"></param>
-    /// <param name="config"></param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
+    /// <param name="services">Коллекция сервисов приложения.</param>
+    /// <param name="config">Конфигурация приложения, содержащая параметры MinIO.</param>
+    /// <returns>Коллекция сервисов с добавленными зависимостями.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Выбрасывается, если не указан обязательный параметр Bucket.
+    /// </exception>
     public static IServiceCollection AddMinioModule(this IServiceCollection services, IConfiguration config)
     {
         var endpoint = config["App:Minio:Endpoint"];

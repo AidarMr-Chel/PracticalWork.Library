@@ -2,44 +2,56 @@
 
 namespace PracticalWork.Library.Abstractions.Services
 {
+    /// <summary>
+    /// Сервис для управления выдачами книг.
+    /// Определяет операции создания, возврата и получения информации о выдачах.
+    /// </summary>
     public interface IBorrowService
     {
         /// <summary>
-        /// Создание выдачи книги
+        /// Создаёт новую выдачу книги читателю.
         /// </summary>
-        /// <param name="bookId"></param>
-        /// <param name="readerId"></param>
-        /// <returns></returns>
+        /// <param name="bookId">Идентификатор книги.</param>
+        /// <param name="readerId">Идентификатор читателя.</param>
+        /// <returns>Идентификатор созданной выдачи.</returns>
         Task<Guid> CreateBorrow(Guid bookId, Guid readerId);
+
         /// <summary>
-        /// Возврат книги
+        /// Регистрирует возврат книги.
         /// </summary>
-        /// <param name="bookId"></param>
-        /// <returns></returns>
+        /// <param name="bookId">Идентификатор книги.</param>
         Task ReturnBook(Guid bookId);
+
         /// <summary>
-        /// Получение списка доступных книг по фильтру
+        /// Возвращает список доступных для выдачи книг,
+        /// отфильтрованных по указанным параметрам.
         /// </summary>
-        /// <param name="filter"></param>
-        /// <returns></returns>
+        /// <param name="filter">Фильтр по свойствам книги.</param>
+        /// <returns>Коллекция доступных книг.</returns>
         Task<IEnumerable<Book>> GetAvailableBooksAsync(Book filter);
+
         /// <summary>
-        /// Получение выдачи по идентификатору
+        /// Возвращает информацию о выдаче по её идентификатору.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <param name="id">Идентификатор выдачи.</param>
+        /// <returns>Модель выдачи.</returns>
         Task<Borrow> GetByIdAsync(Guid id);
+
         /// <summary>
-        /// Получение выдачи по идентификатору читателя
+        /// Возвращает информацию о выдаче по идентификатору читателя.
         /// </summary>
-        /// <param name="readerId"></param>
-        /// <returns></returns>
+        /// <param name="readerId">Идентификатор читателя.</param>
+        /// <returns>Модель выдачи.</returns>
         Task<Borrow> GetByReaderIdAsync(Guid readerId);
+
         /// <summary>
-        /// Получение деталей выдачи по идентификатору или читателю
+        /// Возвращает детали выдачи по идентификатору выдачи или идентификатору читателя.
         /// </summary>
-        /// <param name="idOrReader"></param>
-        /// <returns></returns>
+        /// <param name="idOrReader">
+        /// Идентификатор выдачи или идентификатор читателя.
+        /// Метод сам определяет, что именно передано.
+        /// </param>
+        /// <returns>Модель выдачи.</returns>
         Task<Borrow> GetDetailsAsync(string idOrReader);
     }
 }

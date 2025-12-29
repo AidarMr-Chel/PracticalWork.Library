@@ -6,16 +6,17 @@ using PracticalWork.Library.MessageBroker.RabbitMQ;
 namespace PracticalWork.Library.MessageBroker
 {
     /// <summary>
-    /// Точка входа для добавления зависимостей
+    /// Точка входа для регистрации зависимостей,
+    /// связанных с публикацией событий в RabbitMQ.
     /// </summary>
     public static class Entry
     {
         /// <summary>
-        /// Добавление зависимостей для публикации сообщений в RabbitMQ
+        /// Регистрирует публикатор сообщений RabbitMQ и загружает настройки подключения.
         /// </summary>
-        /// <param name="services"></param>
-        /// <param name="configuration"></param>
-        /// <returns></returns>
+        /// <param name="services">Коллекция сервисов DI.</param>
+        /// <param name="configuration">Конфигурация приложения.</param>
+        /// <returns>Коллекция сервисов DI для цепочки вызовов.</returns>
         public static IServiceCollection AddRabbitMqPublisher(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<RabbitMqOptions>(configuration.GetSection("App:RabbitMQ"));
@@ -24,6 +25,5 @@ namespace PracticalWork.Library.MessageBroker
 
             return services;
         }
-
     }
 }

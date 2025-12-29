@@ -8,7 +8,9 @@ using PracticalWork.Library.Models;
 namespace PracticalWork.Library.Services
 {
     /// <summary>
-    /// Сервис для работы с читателями
+    /// Сервис для управления читателями.
+    /// Отвечает за создание, продление, закрытие карточек,
+    /// а также получение информации о читателях и их книгах.
     /// </summary>
     public sealed class ReaderService : IReaderService
     {
@@ -22,11 +24,13 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Создание новой карточки читателя
+        /// Создаёт новую карточку читателя.
+        /// Выполняет проверку уникальности номера телефона
+        /// и публикует событие о создании читателя.
         /// </summary>
-        /// <param name="reader"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="reader">Модель читателя.</param>
+        /// <returns>Идентификатор созданного читателя.</returns>
+        /// <exception cref="InvalidOperationException">Если номер телефона уже используется.</exception>
         public async Task<Guid> CreateReader(Reader reader)
         {
             var existing = await _readerRepository.GetByPhoneAsync(reader.PhoneNumber);
@@ -38,6 +42,7 @@ namespace PracticalWork.Library.Services
             reader.IsActive = true;
 
             await _readerRepository.AddAsync(reader);
+
             await _publisher.PublishAsync(new ReaderCreatedEvent
             {
                 ReaderId = reader.Id,
@@ -50,12 +55,13 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Продление карточки читателя
+        /// Продлевает срок действия карточки читателя.
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="newDate"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="id">Идентификатор читателя.</param>
+        /// <param name="newDate">Новая дата окончания действия.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если карточка не найдена, неактивна или новая дата меньше текущей.
+        /// </exception>
         public async Task ExtendReader(Guid id, DateOnly newDate)
         {
             var reader = await _readerRepository.GetByIdAsync(id)
@@ -72,11 +78,13 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Закрытие карточки читателя
+        /// Закрывает карточку читателя.
+        /// Проверяет отсутствие невозвращённых книг и публикует событие закрытия.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="id">Идентификатор читателя.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Если карточка не найдена, уже неактивна или есть невозвращённые книги.
+        /// </exception>
         public async Task CloseReader(Guid id)
         {
             var reader = await _readerRepository.GetByIdAsync(id)
@@ -85,15 +93,17 @@ namespace PracticalWork.Library.Services
             if (!reader.IsActive)
                 throw new InvalidOperationException("Карточка уже неактивна");
 
-            var books = await _readerRepository.GetBooksByReaderIdAsync( id );
+            var books = await _readerRepository.GetBooksByReaderIdAsync(id);
             var notReturned = books.Where(b => b.Status != BookStatus.Archived).ToList();
 
             if (notReturned.Any())
-                throw new InvalidOperationException($"У читателя есть несданные книги: {string.Join(", ", notReturned.Select(b => b.Id))}");
+                throw new InvalidOperationException(
+                    $"У читателя есть несданные книги: {string.Join(", ", notReturned.Select(b => b.Id))}");
 
             reader.IsActive = false;
 
             await _readerRepository.UpdateAsync(reader);
+
             await _publisher.PublishAsync(new ReaderClosedEvent
             {
                 ReaderId = id,
@@ -102,11 +112,11 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Получение книг читателя по идентификатору
+        /// Возвращает список книг, выданных читателю.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="id">Идентификатор читателя.</param>
+        /// <returns>Коллекция книг.</returns>
+        /// <exception cref="InvalidOperationException">Если карточка не найдена или неактивна.</exception>
         public async Task<IEnumerable<Book>> GetBook(Guid id)
         {
             var reader = await _readerRepository.GetByIdAsync(id)
@@ -119,10 +129,10 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Поиск идентификатора читателя по номеру телефона
+        /// Ищет идентификатор читателя по номеру телефона.
         /// </summary>
-        /// <param name="phone"></param>
-        /// <returns></returns>
+        /// <param name="phone">Номер телефона.</param>
+        /// <returns>Идентификатор читателя или null.</returns>
         public async Task<Guid?> FindReaderIdByPhoneAsync(string phone)
         {
             var reader = await _readerRepository.GetByPhoneAsync(phone);
@@ -130,10 +140,10 @@ namespace PracticalWork.Library.Services
         }
 
         /// <summary>
-        /// Поиск идентификатора читателя по полному имени
+        /// Ищет идентификатор читателя по полному имени.
         /// </summary>
-        /// <param name="fullName"></param>
-        /// <returns></returns>
+        /// <param name="fullName">Полное имя читателя.</param>
+        /// <returns>Идентификатор читателя или null.</returns>
         public async Task<Guid?> FindReaderIdByNameAsync(string fullName)
         {
             var reader = await _readerRepository.GetByNameAsync(fullName);

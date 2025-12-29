@@ -12,13 +12,17 @@ public sealed class MinioService : IMinioService
         _client = client;
         _bucketName = bucketName;
     }
+
     /// <summary>
-    /// Загружает файл в хранилище
+    /// Загружает файл в MinIO‑хранилище.
+    /// Перед загрузкой гарантирует существование бакета.
     /// </summary>
-    /// <param name="stream"></param>
-    /// <param name="objectName"></param>
-    /// <param name="contentType"></param>
-    /// <returns></returns>
+    /// <param name="stream">Поток данных загружаемого файла.</param>
+    /// <param name="objectName">Имя объекта (файла) в хранилище.</param>
+    /// <param name="contentType">MIME‑тип загружаемого файла.</param>
+    /// <returns>
+    /// Путь к загруженному объекту в формате bucket/objectName.
+    /// </returns>
     public async Task<string> UploadAsync(Stream stream, string objectName, string contentType)
     {
         await EnsureBucketExistsAsync();
@@ -34,10 +38,9 @@ public sealed class MinioService : IMinioService
     }
 
     /// <summary>
-    /// Удаляет файл из хранилища
+    /// Удаляет файл из MinIO‑хранилища.
     /// </summary>
-    /// <param name="objectName"></param>
-    /// <returns></returns>
+    /// <param name="objectName">Имя удаляемого объекта.</param>
     public async Task DeleteAsync(string objectName)
     {
         await _client.RemoveObjectAsync(new RemoveObjectArgs()
@@ -46,19 +49,20 @@ public sealed class MinioService : IMinioService
     }
 
     /// <summary>
-    /// Возвращает URL файла в хранилище
+    /// Возвращает URL файла в MinIO‑хранилище.
     /// </summary>
-    /// <param name="objectName"></param>
-    /// <returns></returns>
+    /// <param name="objectName">Имя объекта.</param>
+    /// <returns>
+    /// Полный URL файла.  
+    /// </returns>
     public Task<string> GetFileUrlAsync(string objectName)
     {
         return Task.FromResult($"http://localhost:9000/{_bucketName}/{objectName}");
     }
 
     /// <summary>
-    /// Возвращает true, если указанный бакет существует, иначе создает его.
+    /// Проверяет существование бакета и создаёт его при необходимости.
     /// </summary>
-    /// <returns></returns>
     private async Task EnsureBucketExistsAsync()
     {
         var exists = await _client.BucketExistsAsync(new BucketExistsArgs().WithBucket(_bucketName));

@@ -1,48 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PracticalWork.Library.Abstractions.Services
+﻿namespace PracticalWork.Library.Abstractions.Services
 {
+    /// <summary>
+    /// Абстракция сервиса кэширования.
+    /// Предоставляет операции чтения, записи, удаления и группового управления ключами.
+    /// </summary>
     public interface ICacheService
     {
         /// <summary>
-        /// Получение значения из кэша по ключу
+        /// Получает значение из кэша по указанному ключу.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        /// <typeparam name="T">Тип возвращаемого значения.</typeparam>
+        /// <param name="key">Ключ, по которому хранится значение.</param>
+        /// <returns>Значение из кэша или значение по умолчанию, если ключ отсутствует.</returns>
         Task<T> GetAsync<T>(string key);
+
         /// <summary>
-        /// Сохранение значения в кэш по ключу с временем жизни
+        /// Сохраняет значение в кэше по указанному ключу с заданным временем жизни.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="ttl"></param>
-        /// <returns></returns>
+        /// <typeparam name="T">Тип сохраняемого значения.</typeparam>
+        /// <param name="key">Ключ, по которому будет сохранено значение.</param>
+        /// <param name="value">Сохраняемое значение.</param>
+        /// <param name="ttl">Время жизни значения в кэше.</param>
         Task SetAsync<T>(string key, T value, TimeSpan ttl);
+
         /// <summary>
-        /// Удаление значения из кэша по ключу
+        /// Удаляет значение из кэша по указанному ключу.
         /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        /// <param name="key">Ключ удаляемого значения.</param>
         Task RemoveAsync(string key);
+
         /// <summary>
-        /// Отслеживание ключа в реестре для последующего удаления
+        /// Регистрирует ключ в указанном реестре для последующей групповой очистки.
+        /// Используется для логического объединения связанных ключей.
         /// </summary>
-        /// <param name="registryKey"></param>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        /// <param name="registryKey">Ключ реестра.</param>
+        /// <param name="key">Ключ, который необходимо отслеживать.</param>
         Task TrackKeyAsync(string registryKey, string key);
+
         /// <summary>
-        /// Очистка кэша по реестру ключей
+        /// Очищает кэш, удаляя все ключи, зарегистрированные в указанном реестре.
         /// </summary>
-        /// <param name="registryKey"></param>
-        /// <returns></returns>
+        /// <param name="registryKey">Ключ реестра, содержащего список отслеживаемых ключей.</param>
         Task ClearByRegistryAsync(string registryKey);
     }
-
 }

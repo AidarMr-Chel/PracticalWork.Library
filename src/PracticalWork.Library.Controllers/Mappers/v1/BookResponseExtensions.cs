@@ -4,14 +4,18 @@ using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Controllers.Mappers.v1
 {
+    /// <summary>
+    /// Методы расширения для преобразования сущностей книг
+    /// в объекты ответов API.
+    /// </summary>
     public static class BookResponseExtensions
     {
         /// <summary>
-        /// Преобразование книги в ответ с деталями
+        /// Преобразует сущность книги в детализированный ответ.
         /// </summary>
-        /// <param name="book"></param>
-        /// <param name="isBorrowed"></param>
-        /// <returns></returns>
+        /// <param name="book">Сущность книги.</param>
+        /// <param name="isBorrowed">Флаг, указывающий, находится ли книга в выдаче.</param>
+        /// <returns>Объект <see cref="BookDetailsResponse"/> с подробной информацией о книге.</returns>
         public static BookDetailsResponse ToDetailsResponse(this Book book, bool isBorrowed = false)
         {
             return new BookDetailsResponse(
@@ -30,6 +34,9 @@ namespace PracticalWork.Library.Controllers.Mappers.v1
             );
         }
 
+        /// <summary>
+        /// Преобразует категорию книги из доменной модели в контракт API.
+        /// </summary>
         private static BookCategory MapCategory(PracticalWork.Library.Enums.BookCategory category) =>
             category switch
             {
@@ -39,6 +46,9 @@ namespace PracticalWork.Library.Controllers.Mappers.v1
                 _ => BookCategory.Default
             };
 
+        /// <summary>
+        /// Преобразует статус книги из доменной модели в контракт API.
+        /// </summary>
         private static BookStatus MapStatus(PracticalWork.Library.Enums.BookStatus status) =>
             status switch
             {

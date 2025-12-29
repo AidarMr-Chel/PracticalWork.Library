@@ -7,11 +7,14 @@ namespace PracticalWork.Library.Cache.Redis;
 public static class Entry
 {
     /// <summary>
-    /// Добавляет к сервисам кэширование с использованием Redis
+    /// Регистрирует в контейнере сервисов кэширование с использованием Redis.
+    /// Настройки подключения берутся из IConfiguration.
     /// </summary>
-    /// <param name="services"></param>
-    /// <param name="configuration"></param>
-    /// <returns></returns>
+    /// <param name="services">Коллекция сервисов приложения.</param>
+    /// <param name="configuration">Конфигурация приложения, содержащая параметры Redis.</param>
+    /// <returns>
+    /// Коллекция сервисов с добавленной поддержкой Redis-кэширования.
+    /// </returns>
     public static IServiceCollection AddCache(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddStackExchangeRedisCache(options =>

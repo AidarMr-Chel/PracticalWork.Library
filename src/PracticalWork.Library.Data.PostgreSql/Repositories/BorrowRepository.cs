@@ -6,6 +6,10 @@ using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Data.PostgreSql.Repositories
 {
+    /// <summary>
+    /// Репозиторий для работы с записями о выдаче книг.
+    /// Содержит операции получения, добавления и обновления выдач.
+    /// </summary>
     public sealed class BorrowRepository : IBorrowRepository
     {
         private readonly AppDbContext _context;
@@ -16,10 +20,13 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Получает активную выдачу книги по идентификатору книги
+        /// Получает активную (текущую) выдачу книги по её идентификатору.
+        /// Активной считается выдача со статусом <see cref="BookIssueStatus.Issued"/>.
         /// </summary>
-        /// <param name="bookId"></param>
-        /// <returns></returns>
+        /// <param name="bookId">Идентификатор книги.</param>
+        /// <returns>
+        /// Модель выдачи или null, если активная выдача отсутствует.
+        /// </returns>
         public async Task<Borrow> GetActiveBorrowAsync(Guid bookId)
         {
             var entity = await _context.BookBorrows
@@ -29,10 +36,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Добавляет запись о выдаче книги
+        /// Добавляет новую запись о выдаче книги.
         /// </summary>
-        /// <param name="borrow"></param>
-        /// <returns></returns>
+        /// <param name="borrow">Модель выдачи.</param>
+        /// <returns>Идентификатор созданной записи.</returns>
         public async Task<Guid> AddBorrowAsync(Borrow borrow)
         {
             var entity = MapToEntity(borrow);
@@ -42,15 +49,15 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Обновляет запись о выдаче книги
+        /// Обновляет существующую запись о выдаче книги.
         /// </summary>
-        /// <param name="borrow"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
+        /// <param name="borrow">Модель выдачи с обновлёнными данными.</param>
+        /// <exception cref="InvalidOperationException">Если запись не найдена.</exception>
         public async Task UpdateBorrowAsync(Borrow borrow)
         {
             var entity = await _context.BookBorrows.FirstOrDefaultAsync(b => b.Id == borrow.Id);
-            if (entity == null) throw new InvalidOperationException("Запись не найдена");
+            if (entity == null)
+                throw new InvalidOperationException("Запись не найдена");
 
             entity.ReturnDate = borrow.ReturnDate;
             entity.Status = borrow.Status;
@@ -59,10 +66,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Преобразует сущность в модель
+        /// Преобразует сущность выдачи в модель.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
+        /// <param name="entity">Сущность выдачи.</param>
+        /// <returns>Модель выдачи.</returns>
         private static Borrow MapToModel(BookBorrowEntity entity) => new()
         {
             Id = entity.Id,
@@ -75,10 +82,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         };
 
         /// <summary>
-        /// Преобразует модель в сущность
+        /// Преобразует модель выдачи в сущность для хранения.
         /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
+        /// <param name="model">Модель выдачи.</param>
+        /// <returns>Сущность выдачи.</returns>
         private static BookBorrowEntity MapToEntity(Borrow model) => new()
         {
             Id = model.Id == Guid.Empty ? Guid.NewGuid() : model.Id,
@@ -91,10 +98,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         };
 
         /// <summary>
-        /// Получает запись о выдаче книги по идентификатору
+        /// Получает запись о выдаче книги по её идентификатору.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <param name="id">Идентификатор записи.</param>
+        /// <returns>Модель выдачи или null, если запись не найдена.</returns>
         public async Task<Borrow> GetByIdAsync(Guid id)
         {
             var entity = await _context.BookBorrows.FirstOrDefaultAsync(b => b.Id == id);
@@ -102,10 +109,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Получает последнюю запись о выдаче книги по идентификатору читателя
+        /// Получает последнюю (самую позднюю по дате) запись о выдаче книги для указанного читателя.
         /// </summary>
-        /// <param name="readerId"></param>
-        /// <returns></returns>
+        /// <param name="readerId">Идентификатор читателя.</param>
+        /// <returns>Модель выдачи или null, если записей нет.</returns>
         public async Task<Borrow> GetByReaderIdAsync(Guid readerId)
         {
             var entity = await _context.BookBorrows
@@ -114,6 +121,5 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
 
             return entity == null ? null : MapToModel(entity);
         }
-
     }
 }

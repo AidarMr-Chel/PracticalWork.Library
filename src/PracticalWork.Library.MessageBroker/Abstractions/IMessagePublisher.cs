@@ -3,14 +3,15 @@
 namespace PracticalWork.Library.MessageBroker.Abstractions
 {
     /// <summary>
-    /// Публикатор событий доменной модели.
+    /// Интерфейс для публикации событий доменной модели
+    /// в брокер сообщений.
     /// </summary>
     public interface IMessagePublisher
     {
         /// <summary>
-        /// Публикация события в брокер сообщений.
+        /// Публикует событие в брокер сообщений.
         /// </summary>
-        /// <param name="evt">Событие, наследующее BaseLibraryEvent</param>
+        /// <param name="evt">Событие, наследующее <see cref="BaseLibraryEvent"/>.</param>
         Task PublishAsync(BaseLibraryEvent evt);
     }
 }

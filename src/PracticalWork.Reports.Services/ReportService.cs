@@ -10,7 +10,9 @@ using PracticalWork.Reports.Minio;
 namespace PracticalWork.Reports.Services;
 
 /// <summary>
-/// Сервис для работы с отчетами
+/// Сервис для работы с отчётами.
+/// Отвечает за генерацию отчётов, сохранение файлов в MinIO,
+/// кэширование списка отчётов и выдачу ссылок на скачивание.
 /// </summary>
 public class ReportService
 {
@@ -32,10 +34,12 @@ public class ReportService
     }
 
     /// <summary>
-    /// Генерирует отчет за указанный период с возможностью фильтрации по типу события
+    /// Генерирует отчёт за указанный период с возможностью фильтрации по типу события.
+    /// Формирует CSV‑файл, загружает его в MinIO, сохраняет запись об отчёте в БД
+    /// и очищает кэш списка отчётов.
     /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
+    /// <param name="request">Параметры генерации отчёта.</param>
+    /// <returns>Информация о сформированном отчёте.</returns>
     public async Task<ReportDto> GenerateReportAsync(GenerateReportRequest request)
     {
         var logs = await _activityRepo.GetLogsAsync(request.From, request.To, request.EventType);
@@ -72,10 +76,10 @@ public class ReportService
     }
 
     /// <summary>
-    /// Генерирует CSV из логов активности
+    /// Генерирует CSV‑представление списка логов активности.
     /// </summary>
-    /// <param name="logs"></param>
-    /// <returns></returns>
+    /// <param name="logs">Коллекция логов активности.</param>
+    /// <returns>CSV‑файл в виде массива байтов.</returns>
     private byte[] GenerateCsv(IEnumerable<ActivityLog> logs)
     {
         var sb = new StringBuilder();
@@ -90,9 +94,10 @@ public class ReportService
     }
 
     /// <summary>
-    /// Возвращает список доступных отчетов
+    /// Возвращает список доступных отчётов.
+    /// Использует кэш Redis для ускорения повторных запросов.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>Список отчётов.</returns>
     public async Task<List<ReportInfoDto>> GetReportsAsync()
     {
         var cached = await _cache.GetAsync<List<ReportInfoDto>>("reports:list");
@@ -117,14 +122,13 @@ public class ReportService
     }
 
     /// <summary>
-    /// Возвращает URL для скачивания отчета по имени
+    /// Возвращает временный URL для скачивания отчёта по имени файла.
     /// </summary>
-    /// <param name="reportName"></param>
-    /// <returns></returns>
-    /// <exception cref="FileNotFoundException"></exception>
+    /// <param name="reportName">Имя файла отчёта.</param>
+    /// <returns>Подписанный URL для скачивания.</returns>
+    /// <exception cref="FileNotFoundException">Если отчёт не найден.</exception>
     public async Task<string> GetDownloadUrlAsync(string reportName)
     {
-
         var objects = await _minio.ListAsync("reports");
 
         var file = objects.FirstOrDefault(o =>

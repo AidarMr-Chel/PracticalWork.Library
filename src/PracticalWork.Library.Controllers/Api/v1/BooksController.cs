@@ -20,9 +20,11 @@ public class BooksController : ControllerBase
         _bookService = bookService;
     }
 
-    /// <summary>Создание новой книги</summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
+    /// <summary>
+    /// Создание новой книги.
+    /// </summary>
+    /// <param name="request">Данные для создания книги.</param>
+    /// <returns>Идентификатор созданной книги.</returns>
     [HttpPost]
     [ProducesResponseType(typeof(CreateBookResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -39,11 +41,11 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
-    /// Обновление книги по идентификатору
+    /// Обновление данных книги по её идентификатору.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="request"></param>
-    /// <returns></returns>
+    /// <param name="id">Идентификатор книги.</param>
+    /// <param name="request">Обновлённые данные книги.</param>
+    /// <returns>Код 204 в случае успешного обновления.</returns>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -58,10 +60,10 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
-    /// >Архивирование книги по идентификатору
+    /// Архивирование книги по идентификатору.
     /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
+    /// <param name="id">Идентификатор книги.</param>
+    /// <returns>Информация об архивировании книги.</returns>
     [HttpPut("{id:guid}/archive")]
     [ProducesResponseType(typeof(ArchiveBookResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -76,10 +78,11 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
-    /// Получение списка книг (с фильтрацией и пагинацией, кеш Redis)
+    /// Получение списка книг с поддержкой фильтрации и пагинации.
+    /// Данные кешируются в Redis.
     /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
+    /// <param name="request">Параметры фильтрации и пагинации.</param>
+    /// <returns>Список книг, удовлетворяющих фильтру.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<BookDetailsResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -99,11 +102,11 @@ public class BooksController : ControllerBase
     }
 
     /// <summary>
-    /// Обновление деталей книги (описание + обложка)
+    /// Обновление деталей книги (описание и обложка).
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="request"></param>
-    /// <returns></returns>
+    /// <param name="id">Идентификатор книги.</param>
+    /// <param name="request">Описание и файл обложки.</param>
+    /// <returns>Код 204 в случае успешного обновления.</returns>
     [HttpPost("{id:guid}/details")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UpdateDetails(Guid id, [FromForm] UpdateBookDetailsRequest request)

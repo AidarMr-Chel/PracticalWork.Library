@@ -1,23 +1,24 @@
 ﻿namespace PracticalWork.Library.Contracts.v1.Enums;
 
 /// <summary>
-/// Состояние книги
+/// Статус выдачи книги.
+/// Определяет текущее состояние операции выдачи.
 /// </summary>
 public enum BookIssueStatus
 {
     /// <summary>
-    /// Выдана
+    /// Книга выдана читателю.
     /// </summary>
-    /// <remarks>Значение по умолчанию</remarks>
+    /// <remarks>Значение по умолчанию.</remarks>
     Issued = 0,
 
     /// <summary>
-    /// Возвращена
+    /// Книга возвращена в срок.
     /// </summary>
     Returned = 10,
 
     /// <summary>
-    /// Возвращена с просрочкой
+    /// Книга возвращена с просрочкой.
     /// </summary>
     Overdue = 20
 }

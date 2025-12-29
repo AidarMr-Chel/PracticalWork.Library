@@ -6,6 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace PracticalWork.Library.Data.PostgreSql.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с книгами.
+/// Содержит операции добавления, получения, обновления и поиска книг.
+/// </summary>
 public sealed class BookRepository : IBookRepository
 {
     private readonly AppDbContext _context;
@@ -16,10 +20,10 @@ public sealed class BookRepository : IBookRepository
     }
 
     /// <summary>
-    /// Добавляет книгу в хранилище
+    /// Добавляет новую книгу в хранилище.
     /// </summary>
-    /// <param name="book"></param>
-    /// <returns></returns>
+    /// <param name="book">Модель книги.</param>
+    /// <returns>Идентификатор созданной книги.</returns>
     public async Task<Guid> AddAsync(Book book)
     {
         var entity = MapBookToEntity(book);
@@ -29,10 +33,10 @@ public sealed class BookRepository : IBookRepository
     }
 
     /// <summary>
-    /// Получает книгу по идентификатору
+    /// Получает книгу по её идентификатору.
     /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
+    /// <param name="id">Идентификатор книги.</param>
+    /// <returns>Модель книги или null, если книга не найдена.</returns>
     public async Task<Book> GetByIdAsync(Guid id)
     {
         var entity = await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
@@ -40,11 +44,10 @@ public sealed class BookRepository : IBookRepository
     }
 
     /// <summary>
-    /// Обновляет информацию о книге
+    /// Обновляет данные существующей книги.
     /// </summary>
-    /// <param name="book"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
+    /// <param name="book">Модель книги с обновлёнными данными.</param>
+    /// <exception cref="ArgumentException">Если книга не найдена.</exception>
     public async Task UpdateAsync(Book book)
     {
         var entity = await _context.Books.FirstOrDefaultAsync(b => b.Id == book.Id);
@@ -57,10 +60,11 @@ public sealed class BookRepository : IBookRepository
     }
 
     /// <summary>
-    /// Находит книги по фильтру
+    /// Ищет книги по заданному фильтру.
+    /// Поддерживает фильтрацию по статусу, категории и авторам.
     /// </summary>
-    /// <param name="filter"></param>
-    /// <returns></returns>
+    /// <param name="filter">Фильтр поиска.</param>
+    /// <returns>Коллекция найденных книг.</returns>
     public async Task<IEnumerable<Book>> FindAsync(Book filter)
     {
         var query = _context.Books.AsQueryable();
@@ -88,11 +92,12 @@ public sealed class BookRepository : IBookRepository
     }
 
     /// <summary>
-    /// Преобразует модель книги в сущность для хранения
+    /// Создаёт сущность книги на основе модели.
+    /// Определяет тип сущности по категории книги.
     /// </summary>
-    /// <param name="book"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
+    /// <param name="book">Модель книги.</param>
+    /// <returns>Сущность книги.</returns>
+    /// <exception cref="ArgumentException">Если категория книги не поддерживается.</exception>
     private static AbstractBookEntity MapBookToEntity(Book book)
     {
         AbstractBookEntity entity = book.Category switch
@@ -108,10 +113,11 @@ public sealed class BookRepository : IBookRepository
     }
 
     /// <summary>
-    /// Копирует свойства модели книги в сущность для хранения
+    /// Копирует данные из модели книги в сущность.
+    /// Используется как при создании, так и при обновлении.
     /// </summary>
-    /// <param name="book"></param>
-    /// <param name="entity"></param>
+    /// <param name="book">Модель книги.</param>
+    /// <param name="entity">Сущность книги.</param>
     private static void MapBookToEntity(Book book, AbstractBookEntity entity)
     {
         entity.Id = book.Id == Guid.Empty ? Guid.NewGuid() : book.Id;
@@ -126,11 +132,12 @@ public sealed class BookRepository : IBookRepository
     }
 
     /// <summary>
-    /// Преобразует сущность книги в модель
+    /// Преобразует сущность книги в модель.
+    /// Определяет категорию книги по типу сущности.
     /// </summary>
-    /// <param name="entity"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
+    /// <param name="entity">Сущность книги.</param>
+    /// <returns>Модель книги.</returns>
+    /// <exception cref="ArgumentException">Если тип сущности не поддерживается.</exception>
     private static Book MapEntityToBook(AbstractBookEntity entity) => new()
     {
         Id = entity.Id,

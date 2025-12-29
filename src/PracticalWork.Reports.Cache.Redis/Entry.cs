@@ -3,11 +3,19 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace PracticalWork.Reports.Cache.Redis;
 
+/// <summary>
+/// Точка входа для регистрации кэширования отчётов с использованием Redis.
+/// Позволяет подключить Redis‑кэш и сервисы, работающие с ним.
+/// </summary>
 public static class Entry
 {
     /// <summary>
-    /// Добавляет к сервисам кэширование отчетов с использованием Redis
+    /// Регистрирует в контейнере сервисов кэширование отчётов на базе Redis.
+    /// Настройки подключения берутся из конфигурации приложения.
     /// </summary>
+    /// <param name="services">Коллекция сервисов приложения.</param>
+    /// <param name="configuration">Конфигурация приложения, содержащая параметры Redis.</param>
+    /// <returns>Коллекция сервисов с добавленным кэшированием отчётов.</returns>
     public static IServiceCollection AddReportsCache(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddStackExchangeRedisCache(options =>

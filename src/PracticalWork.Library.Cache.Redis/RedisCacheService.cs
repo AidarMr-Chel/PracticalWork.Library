@@ -3,7 +3,8 @@ using Microsoft.Extensions.Caching.Distributed;
 using PracticalWork.Library.Abstractions.Services;
 
 /// <summary>
-/// Кэширование с использованием Redis
+/// Кэширование с использованием Redis.
+/// Сериализация и десериализация выполняются через System.Text.Json.
 /// </summary>
 public class RedisCacheService : ICacheService
 {
@@ -15,11 +16,14 @@ public class RedisCacheService : ICacheService
     }
 
     /// <summary>
-    /// По ключу получает значение из кэша
+    /// По ключу получает значение из кэша.
+    /// Десериализация выполняется через System.Text.Json.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="key"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">Тип возвращаемого значения.</typeparam>
+    /// <param name="key">Ключ кэша.</param>
+    /// <returns>
+    /// Значение из кэша или значение по умолчанию, если ключ не найден.
+    /// </returns>
     public async Task<T> GetAsync<T>(string key)
     {
         var json = await _cache.GetStringAsync(key);
@@ -27,13 +31,14 @@ public class RedisCacheService : ICacheService
     }
 
     /// <summary>
-    /// По ключу сохраняет значение в кэш с указанным временем жизни
+    /// По ключу сохраняет значение в кэш с указанным временем жизни.
+    /// Сериализация выполняется через System.Text.Json.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <param name="ttl"></param>
-    /// <returns></returns>
+    /// <typeparam name="T">Тип сохраняемого значения.</typeparam>
+    /// <param name="key">Ключ кэша.</param>
+    /// <param name="value">Сохраняемое значение.</param>
+    /// <param name="ttl">Время жизни записи.</param>
+    /// <returns>Задача сохранения значения в кэш.</returns>
     public async Task SetAsync<T>(string key, T value, TimeSpan ttl)
     {
         var json = JsonSerializer.Serialize(value);
@@ -44,19 +49,19 @@ public class RedisCacheService : ICacheService
     }
 
     /// <summary>
-    /// По ключу удаляет значение из кэша
+    /// По ключу удаляет значение из кэша.
     /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
+    /// <param name="key">Ключ кэша.</param>
+    /// <returns>Задача удаления значения из кэша.</returns>
     public Task RemoveAsync(string key) =>
         _cache.RemoveAsync(key);
 
     /// <summary>
-    /// Регистрирует ключ под реестровым ключом
+    /// Регистрирует ключ под реестровым ключом.
+    /// Список ключей сериализуется через System.Text.Json.
     /// </summary>
-    /// <param name="registryKey"></param>
-    /// <param name="key"></param>
-    /// <returns></returns>
+    /// <param name="registryKey">Ключ реестра.</param>
+    /// <param name="key">Добавляемый ключ.</param>
     public async Task TrackKeyAsync(string registryKey, string key)
     {
         var existing = await _cache.GetStringAsync(registryKey);
@@ -70,10 +75,10 @@ public class RedisCacheService : ICacheService
     }
 
     /// <summary>
-    /// Очищает кэш по реестровому ключу
+    /// Очищает кэш по реестровому ключу.
+    /// Список ключей десериализуется через System.Text.Json.
     /// </summary>
-    /// <param name="registryKey"></param>
-    /// <returns></returns>
+    /// <param name="registryKey">Ключ реестра.</param>
     public async Task ClearByRegistryAsync(string registryKey)
     {
         var existing = await _cache.GetStringAsync(registryKey);

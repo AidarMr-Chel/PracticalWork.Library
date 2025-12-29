@@ -6,6 +6,11 @@ using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Data.PostgreSql.Repositories
 {
+    /// <summary>
+    /// Репозиторий для работы с читателями.
+    /// Содержит операции получения, добавления и обновления данных читателей,
+    /// а также получение списка книг, выданных конкретному читателю.
+    /// </summary>
     public sealed class ReaderRepository : IReaderRepository
     {
         private readonly AppDbContext _appDbContext;
@@ -16,10 +21,11 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Получает читателя по идентификатору
+        /// Получает читателя по его идентификатору.
+        /// Загружает также связанные записи о выдачах.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
+        /// <param name="id">Идентификатор читателя.</param>
+        /// <returns>Модель читателя или null, если читатель не найден.</returns>
         public async Task<Reader> GetByIdAsync(Guid id)
         {
             var entity = await _appDbContext.Readers
@@ -30,10 +36,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Получает читателя по номеру телефона
+        /// Получает читателя по номеру телефона.
         /// </summary>
-        /// <param name="phone"></param>
-        /// <returns></returns>
+        /// <param name="phone">Номер телефона читателя.</param>
+        /// <returns>Модель читателя или null, если читатель не найден.</returns>
         public async Task<Reader> GetByPhoneAsync(string phone)
         {
             var entity = await _appDbContext.Readers
@@ -44,10 +50,9 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Добавляет читателя в хранилище
+        /// Добавляет нового читателя в хранилище.
         /// </summary>
-        /// <param name="reader"></param>
-        /// <returns></returns>
+        /// <param name="reader">Модель читателя.</param>
         public async Task AddAsync(Reader reader)
         {
             var entity = MapToEntity(reader);
@@ -56,20 +61,20 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Обновляет информацию о читателе
+        /// Обновляет данные существующего читателя.
+        /// Предполагается, что сущность уже отслеживается контекстом.
         /// </summary>
-        /// <param name="reader"></param>
-        /// <returns></returns>
+        /// <param name="reader">Модель читателя с обновлёнными данными.</param>
         public async Task UpdateAsync(Reader reader)
         {
             await _appDbContext.SaveChangesAsync();
         }
 
         /// <summary>
-        /// Получает книги, взятые читателем по его идентификатору
+        /// Получает список книг, которые читатель взял и ещё не вернул.
         /// </summary>
-        /// <param name="readerId"></param>
-        /// <returns></returns>
+        /// <param name="readerId">Идентификатор читателя.</param>
+        /// <returns>Коллекция моделей книг.</returns>
         public async Task<IEnumerable<Book>> GetBooksByReaderIdAsync(Guid readerId)
         {
             var bookIds = await _appDbContext.BookBorrows
@@ -85,10 +90,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Получает читателя по полному имени
+        /// Получает читателя по его полному имени.
         /// </summary>
-        /// <param name="fullName"></param>
-        /// <returns></returns>
+        /// <param name="fullName">Полное имя читателя.</param>
+        /// <returns>Модель читателя или null, если читатель не найден.</returns>
         public async Task<Reader> GetByNameAsync(string fullName)
         {
             var entity = await _appDbContext.Readers
@@ -99,10 +104,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         }
 
         /// <summary>
-        /// Преобразует сущность в модель
+        /// Преобразует сущность читателя в модель.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
+        /// <param name="entity">Сущность читателя.</param>
+        /// <returns>Модель читателя.</returns>
         private static Reader MapToModel(ReaderEntity entity) =>
             new Reader
             {
@@ -114,10 +119,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
             };
 
         /// <summary>
-        /// Преобразует модель в сущность
+        /// Преобразует модель читателя в сущность для хранения.
         /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
+        /// <param name="model">Модель читателя.</param>
+        /// <returns>Сущность читателя.</returns>
         private static ReaderEntity MapToEntity(Reader model) =>
             new ReaderEntity
             {
@@ -129,10 +134,11 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
             };
 
         /// <summary>
-        /// Преобразует сущность книги в модель
+        /// Преобразует сущность книги в модель.
+        /// Определяет категорию книги по типу сущности.
         /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
+        /// <param name="entity">Сущность книги.</param>
+        /// <returns>Модель книги.</returns>
         private static Book MapBookToModel(AbstractBookEntity entity) =>
            new Book
            {

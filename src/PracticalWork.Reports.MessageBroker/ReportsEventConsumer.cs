@@ -7,24 +7,24 @@ using RabbitMQ.Client.Events;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 
-
 namespace PracticalWork.Reports.MessageBroker
 {
     /// <summary>
-    /// Потребитель событий для отчетов
+    /// Фоновый сервис‑потребитель событий RabbitMQ для модуля отчётов.
+    /// Получает сообщения из очереди, сохраняет их в базу данных как логи активности.
     /// </summary>
     public class ReportsEventConsumer : BackgroundService
     {
         private readonly IServiceProvider _provider;
         private readonly RabbitMqOptions _options;
-        private IConnection _connection;
-        private IModel _channel;
+        private readonly IConnection _connection;
+        private readonly IModel _channel;
 
         /// <summary>
-        /// Конструктор потребителя событий для отчетов
+        /// Создаёт экземпляр потребителя событий отчётов и настраивает подключение к RabbitMQ.
         /// </summary>
-        /// <param name="provider"></param>
-        /// <param name="options"></param>
+        /// <param name="provider">Провайдер сервисов для создания скоупов.</param>
+        /// <param name="options">Настройки подключения к RabbitMQ.</param>
         public ReportsEventConsumer(IServiceProvider provider, IOptions<RabbitMqOptions> options)
         {
             _provider = provider;
@@ -58,10 +58,10 @@ namespace PracticalWork.Reports.MessageBroker
         }
 
         /// <summary>
-        /// Основной метод для обработки сообщений из очереди
+        /// Основной цикл обработки сообщений.
+        /// Подписывается на очередь и сохраняет каждое событие в базу данных.
         /// </summary>
-        /// <param name="stoppingToken"></param>
-        /// <returns></returns>
+        /// <param name="stoppingToken">Токен отмены для корректной остановки сервиса.</param>
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var consumer = new EventingBasicConsumer(_channel);

@@ -2,79 +2,89 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace PracticalWork.Library.Web.Configuration;
-
-/// <summary>
-/// Фильтр предназначен для трансформации доменных исключений в Bad Request
-/// </summary>
-/// <typeparam name="TAppException"> Доменное исключение </typeparam>
-[UsedImplicitly]
-public class DomainExceptionFilter<TAppException> : IAsyncActionFilter where TAppException : Exception
+namespace PracticalWork.Library.Web.Configuration
 {
-    protected readonly ILogger Logger;
-
-    public DomainExceptionFilter(ILogger<DomainExceptionFilter<TAppException>> logger)
-    {
-        Logger = logger;
-    }
     /// <summary>
-    /// Обработка исключений после выполнения действия контроллера
+    /// Фильтр для преобразования доменных исключений в ответ формата BadRequest (400).
+    /// Позволяет унифицировать обработку ошибок доменной логики.
     /// </summary>
-    /// <param name="context"></param>
-    /// <param name="next"></param>
-    /// <returns></returns>
-    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+    /// <typeparam name="TAppException">Тип доменного исключения.</typeparam>
+    [UsedImplicitly]
+    public class DomainExceptionFilter<TAppException> : IAsyncActionFilter
+        where TAppException : Exception
     {
-        var resultContext = await next();
-        if (HasException(resultContext))
+        /// <summary>
+        /// Логгер для записи информации об ошибках.
+        /// </summary>
+        protected readonly ILogger Logger;
+
+        /// <summary>
+        /// Создаёт новый экземпляр фильтра обработки доменных исключений.
+        /// </summary>
+        /// <param name="logger">Логгер для записи ошибок.</param>
+        public DomainExceptionFilter(ILogger<DomainExceptionFilter<TAppException>> logger)
         {
-            TryHandleException(resultContext, resultContext.Exception);
+            Logger = logger;
         }
-    }
 
-    /// <summary>
-    /// Проверка наличия необработанного исключения в контексте
-    /// </summary>
-    /// <param name="context"></param>
-    /// <returns></returns>
-    private static bool HasException(ActionExecutedContext context) => context.Exception != null && !context.ExceptionHandled;
-
-    /// <summary>
-    /// Попытка обработать исключение определенного типа
-    /// </summary>
-    /// <param name="context"></param>
-    /// <param name="exception"></param>
-    protected virtual void TryHandleException(ActionExecutedContext context, Exception exception)
-    {
-        if (exception is not TAppException)
-            return;
-
-        var problemDetails = BuildProblemDetails(exception);
-
-        context.Result = new BadRequestObjectResult(problemDetails);
-        context.ExceptionHandled = true;
-
-        Logger.LogError(exception, "Unhandled domain exception. Transformed to Bad request (400).");
-    }
-
-    /// <summary>
-    /// Построение объекта ValidationProblemDetails на основе исключения
-    /// </summary>
-    /// <param name="exception"></param>
-    /// <returns></returns>
-    protected static ValidationProblemDetails BuildProblemDetails(Exception exception)
-    {
-        var exceptionName = exception.GetType().Name;
-        var errorMessages = new[] { exception.Message };
-
-        // Используем ValidationProblemDetails, а не базовый или свой тип, т. к. он обвешан атрибутами сериализации
-        // и так мы можем гарантировать идентичный ответ и при ошибках валидации, и при доменных исключениях:
-        var problemDetails = new ValidationProblemDetails
+        /// <summary>
+        /// Выполняет обработку исключений после выполнения действия контроллера.
+        /// </summary>
+        /// <param name="context">Контекст выполнения действия.</param>
+        /// <param name="next">Делегат выполнения следующего этапа конвейера.</param>
+        public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            Title = "Произошла ошибка во время выполнения запроса.",
-            Errors = { { exceptionName, errorMessages } }
-        };
+            var resultContext = await next();
 
-        return problemDetails;
+            if (HasException(resultContext))
+            {
+                TryHandleException(resultContext, resultContext.Exception!);
+            }
+        }
+
+        /// <summary>
+        /// Проверяет, содержит ли контекст необработанное исключение.
+        /// </summary>
+        /// <param name="context">Контекст выполнения действия.</param>
+        private static bool HasException(ActionExecutedContext context) =>
+            context.Exception != null && !context.ExceptionHandled;
+
+        /// <summary>
+        /// Пытается обработать исключение указанного типа и преобразовать его в BadRequest.
+        /// </summary>
+        /// <param name="context">Контекст выполнения действия.</param>
+        /// <param name="exception">Исключение, возникшее при выполнении действия.</param>
+        protected virtual void TryHandleException(ActionExecutedContext context, Exception exception)
+        {
+            if (exception is not TAppException)
+                return;
+
+            var problemDetails = BuildProblemDetails(exception);
+
+            context.Result = new BadRequestObjectResult(problemDetails);
+            context.ExceptionHandled = true;
+
+            Logger.LogError(exception, "Unhandled domain exception. Transformed to BadRequest (400).");
+        }
+
+        /// <summary>
+        /// Создаёт объект <see cref="ValidationProblemDetails"/> на основе исключения.
+        /// Используется единый формат ошибок для валидации и доменных исключений.
+        /// </summary>
+        /// <param name="exception">Исключение, содержащее сообщение об ошибке.</param>
+        /// <returns>Объект <see cref="ValidationProblemDetails"/>.</returns>
+        protected static ValidationProblemDetails BuildProblemDetails(Exception exception)
+        {
+            var exceptionName = exception.GetType().Name;
+            var errorMessages = new[] { exception.Message };
+
+            var problemDetails = new ValidationProblemDetails
+            {
+                Title = "Произошла ошибка во время выполнения запроса.",
+                Errors = { { exceptionName, errorMessages } }
+            };
+
+            return problemDetails;
+        }
     }
 }

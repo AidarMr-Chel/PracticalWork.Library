@@ -5,13 +5,17 @@ using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Controllers.Mappers.v1;
 
+/// <summary>
+/// Методы расширения для преобразования запросов API
+/// в доменную модель книги.
+/// </summary>
 public static class BooksExtensions
 {
     /// <summary>
-    /// Преобразование CreateBookRequest в Book
+    /// Преобразует запрос на создание книги в доменную модель <see cref="Book"/>.
     /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
+    /// <param name="request">Запрос на создание книги.</param>
+    /// <returns>Экземпляр доменной модели книги.</returns>
     public static Book ToBook(this CreateBookRequest request) =>
         new()
         {
@@ -24,11 +28,12 @@ public static class BooksExtensions
                 : BookCategory.Default,
             Status = BookStatus.Available
         };
+
     /// <summary>
-    /// Преобразование UpdateBookRequest в Book
+    /// Преобразует запрос на обновление книги в доменную модель <see cref="Book"/>.
     /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
+    /// <param name="request">Запрос на обновление книги.</param>
+    /// <returns>Экземпляр доменной модели книги.</returns>
     public static Book ToBook(this UpdateBookRequest request) =>
         new()
         {
@@ -44,11 +49,13 @@ public static class BooksExtensions
                 : BookStatus.Available,
             CoverImagePath = request.CoverImagePath
         };
+
     /// <summary>
-    /// Преобразование BookFilterRequest в Book
+    /// Преобразует фильтр поиска книг в доменную модель <see cref="Book"/>.
+    /// Используется для передачи параметров фильтрации в сервисный слой.
     /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
+    /// <param name="request">Фильтр поиска книг.</param>
+    /// <returns>Экземпляр доменной модели книги с заполненными критериями фильтрации.</returns>
     public static Book ToBook(this BookFilterRequest request) =>
         new()
         {

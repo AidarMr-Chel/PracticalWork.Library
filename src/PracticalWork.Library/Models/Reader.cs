@@ -1,24 +1,35 @@
 ﻿namespace PracticalWork.Library.Models
 {
     /// <summary>
-    /// Читатель
+    /// Модель читателя библиотеки.
+    /// Содержит основную информацию о владельце читательского билета.
     /// </summary>
     public sealed class Reader
     {
-        /// <summary>Идентификатор читателя</summary>
+        /// <summary>
+        /// Уникальный идентификатор читателя.
+        /// </summary>
         public Guid Id { get; set; }
 
-        /// <summary>ФИО</summary>
-        /// <remarks>Запись идет через пробел</remarks>
+        /// <summary>
+        /// Полное имя читателя.
+        /// </summary>
+        /// <remarks>Формат записи: Фамилия Имя Отчество через пробел.</remarks>
         public string FullName { get; set; } = string.Empty;
 
-        /// <summary>Номер телефона</summary>
+        /// <summary>
+        /// Номер телефона читателя.
+        /// </summary>
         public string PhoneNumber { get; set; } = string.Empty;
 
-        /// <summary>Дата окончания действия карточки</summary>
+        /// <summary>
+        /// Дата окончания действия читательского билета.
+        /// </summary>
         public DateOnly ExpiryDate { get; set; }
 
-        /// <summary>Активность карточки</summary>
+        /// <summary>
+        /// Признак активности читательского билета.
+        /// </summary>
         public bool IsActive { get; set; }
     }
 }

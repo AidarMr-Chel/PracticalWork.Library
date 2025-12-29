@@ -1,13 +1,16 @@
 ﻿using FluentValidation;
 using PracticalWork.Library.Contracts.v1.Books.Request;
-using Microsoft.AspNetCore.Http;
 
 namespace PracticalWork.Library.Controllers.Validations.v1
 {
+    /// <summary>
+    /// Валидатор запроса обновления деталей книги.
+    /// Проверяет корректность описания и файла обложки.
+    /// </summary>
     public sealed class AddBookDetailsRequestValidator : AbstractValidator<UpdateBookDetailsRequest>
     {
         /// <summary>
-        /// Конструктор валидатора запроса добавления деталей книги
+        /// Создаёт новый экземпляр валидатора для <see cref="UpdateBookDetailsRequest"/>.
         /// </summary>
         public AddBookDetailsRequestValidator()
         {

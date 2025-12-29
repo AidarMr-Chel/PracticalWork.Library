@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PracticalWork.Library.Contracts.v1.Borrows.Response
+﻿namespace PracticalWork.Library.Contracts.v1.Borrows.Response
 {
     /// <summary>
-    /// Ответ при создании записи о выдаче книги
+    /// Ответ на операцию создания записи о выдаче книги.
+    /// Содержит идентификатор созданной выдачи.
     /// </summary>
-    /// <param name="Id"></param>
+    /// <param name="Id">Идентификатор выдачи.</param>
     public sealed record CreateBorrowResponse(Guid Id);
 }

@@ -2,6 +2,10 @@
 
 namespace PracticalWork.Reports.Data.PostgreSql.Repositories;
 
+/// <summary>
+/// Репозиторий для работы с отчётами.
+/// Содержит операции сохранения отчётов в хранилище.
+/// </summary>
 public class ReportRepository
 {
     private readonly ReportsDbContext _db;
@@ -12,10 +16,9 @@ public class ReportRepository
     }
 
     /// <summary>
-    /// Добавляет отчет в хранилище
+    /// Добавляет новый отчёт в хранилище и сохраняет изменения.
     /// </summary>
-    /// <param name="report"></param>
-    /// <returns></returns>
+    /// <param name="report">Отчёт, который необходимо сохранить.</param>
     public async Task AddAsync(Report report)
     {
         _db.Reports.Add(report);

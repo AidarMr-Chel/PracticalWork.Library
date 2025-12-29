@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PracticalWork.Reports.Entities;
-using System.Collections.Generic;
 
 namespace PracticalWork.Reports.Data.PostgreSql
 {
     /// <summary>
-    /// Контекст базы данных для отчетов
+    /// Контекст базы данных для модуля отчётов.
+    /// Определяет наборы сущностей и используется для работы с PostgreSQL.
     /// </summary>
     public class ReportsDbContext : DbContext
     {
@@ -14,8 +14,14 @@ namespace PracticalWork.Reports.Data.PostgreSql
         {
         }
 
+        /// <summary>
+        /// Набор логов активности.
+        /// </summary>
         public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
-        public DbSet<Report> Reports => Set<Report>();
 
+        /// <summary>
+        /// Набор отчётов.
+        /// </summary>
+        public DbSet<Report> Reports => Set<Report>();
     }
 }

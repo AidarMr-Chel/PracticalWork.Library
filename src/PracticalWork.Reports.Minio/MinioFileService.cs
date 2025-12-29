@@ -6,7 +6,9 @@ using Minio.DataModel.Args;
 namespace PracticalWork.Reports.Minio;
 
 /// <summary>
-/// Сервис для работы с MinIO
+/// Сервис для работы с объектным хранилищем MinIO.
+/// Предоставляет операции загрузки, удаления, получения ссылок,
+/// проверки существования и перечисления объектов.
 /// </summary>
 public class MinioService : IMinioService
 {
@@ -20,12 +22,13 @@ public class MinioService : IMinioService
     }
 
     /// <summary>
-    /// Загрузка файла в хранилище MinIO
+    /// Загружает файл в хранилище MinIO.
+    /// При необходимости автоматически создаёт bucket.
     /// </summary>
-    /// <param name="stream"></param>
-    /// <param name="objectName"></param>
-    /// <param name="contentType"></param>
-    /// <returns></returns>
+    /// <param name="stream">Поток данных загружаемого файла.</param>
+    /// <param name="objectName">Имя объекта (ключ), под которым файл будет сохранён.</param>
+    /// <param name="contentType">MIME‑тип содержимого.</param>
+    /// <returns>Путь к объекту в формате <c>bucket/objectName</c>.</returns>
     public async Task<string> UploadAsync(Stream stream, string objectName, string contentType)
     {
         await EnsureBucketExistsAsync();
@@ -43,10 +46,9 @@ public class MinioService : IMinioService
     }
 
     /// <summary>
-    /// Удаление файла из хранилища MinIO
+    /// Удаляет объект из хранилища MinIO.
     /// </summary>
-    /// <param name="objectName"></param>
-    /// <returns></returns>
+    /// <param name="objectName">Имя объекта.</param>
     public async Task DeleteAsync(string objectName)
     {
         var args = new RemoveObjectArgs()
@@ -57,19 +59,19 @@ public class MinioService : IMinioService
     }
 
     /// <summary>
-    /// Получение URL файла в хранилище MinIO
+    /// Возвращает публичный URL объекта.
+    /// Подходит только для bucket'ов с публичным доступом.
     /// </summary>
-    /// <param name="objectName"></param>
-    /// <returns></returns>
+    /// <param name="objectName">Имя объекта.</param>
+    /// <returns>URL файла.</returns>
     public Task<string> GetFileUrlAsync(string objectName)
     {
         return Task.FromResult($"http://localhost:9000/{_bucket}/{objectName}");
     }
 
     /// <summary>
-    /// Проверка существования корзины, создание при отсутствии
+    /// Проверяет существование bucket и создаёт его при отсутствии.
     /// </summary>
-    /// <returns></returns>
     private async Task EnsureBucketExistsAsync()
     {
         var exists = await _client.BucketExistsAsync(new BucketExistsArgs().WithBucket(_bucket));
@@ -80,10 +82,10 @@ public class MinioService : IMinioService
     }
 
     /// <summary>
-    /// Получение списка файлов в хранилище MinIO по префиксу
+    /// Возвращает список объектов, имена которых начинаются с указанного префикса.
     /// </summary>
-    /// <param name="prefix"></param>
-    /// <returns></returns>
+    /// <param name="prefix">Префикс имени объекта.</param>
+    /// <returns>Список объектов MinIO.</returns>
     public async Task<List<MinioObjectInfo>> ListAsync(string prefix)
     {
         var result = new List<MinioObjectInfo>();
@@ -110,10 +112,10 @@ public class MinioService : IMinioService
     }
 
     /// <summary>
-    /// Проверка существования файла в хранилище MinIO
+    /// Проверяет существование объекта в хранилище MinIO.
     /// </summary>
-    /// <param name="objectName"></param>
-    /// <returns></returns>
+    /// <param name="objectName">Имя объекта.</param>
+    /// <returns><c>true</c>, если объект существует; иначе <c>false</c>.</returns>
     public async Task<bool> ExistsAsync(string objectName)
     {
         try
@@ -132,11 +134,11 @@ public class MinioService : IMinioService
     }
 
     /// <summary>
-    /// Получение подписанного URL файла в хранилище MinIO
+    /// Возвращает подписанный (временный) URL для приватного объекта.
     /// </summary>
-    /// <param name="objectName"></param>
-    /// <param name="expiry"></param>
-    /// <returns></returns>
+    /// <param name="objectName">Имя объекта.</param>
+    /// <param name="expiry">Время жизни ссылки.</param>
+    /// <returns>Подписанный URL.</returns>
     public async Task<string> GetSignedUrlAsync(string objectName, TimeSpan expiry)
     {
         var args = new PresignedGetObjectArgs()
@@ -146,6 +148,4 @@ public class MinioService : IMinioService
 
         return await _client.PresignedGetObjectAsync(args);
     }
-
-
 }

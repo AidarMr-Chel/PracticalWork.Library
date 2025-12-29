@@ -6,7 +6,9 @@ using PracticalWork.Library.Models;
 namespace PracticalWork.Library.Controllers.Api.v1
 {
     /// <summary>
-    /// Контроллер для управления процессами выдачи и возврата книг в библиотеке.
+    /// Контроллер для управления процессами выдачи и возврата книг.
+    /// Предоставляет операции создания выдачи, возврата книги,
+    /// получения списка доступных книг и получения деталей выдачи.
     /// </summary>
     [ApiController]
     [ApiVersion("1")]
@@ -27,7 +29,7 @@ namespace PracticalWork.Library.Controllers.Api.v1
         /// </summary>
         /// <param name="bookId">Идентификатор книги.</param>
         /// <param name="readerId">Идентификатор читателя.</param>
-        /// <returns>Возвращает идентификатор созданной выдачи.</returns>
+        /// <returns>Идентификатор созданной выдачи.</returns>
         [HttpPost("borrow")]
         public async Task<IActionResult> CreateBorrow([FromQuery] Guid bookId, [FromQuery] Guid readerId)
         {
@@ -39,7 +41,7 @@ namespace PracticalWork.Library.Controllers.Api.v1
         /// Возврат книги в библиотеку.
         /// </summary>
         /// <param name="bookId">Идентификатор книги.</param>
-        /// <returns>Возвращает статус 204 NoContent при успешном возврате.</returns>
+        /// <returns>Статус 204 NoContent при успешном возврате.</returns>
         [HttpPost("return")]
         public async Task<IActionResult> ReturnBook([FromQuery] Guid bookId)
         {
@@ -48,7 +50,7 @@ namespace PracticalWork.Library.Controllers.Api.v1
         }
 
         /// <summary>
-        /// Получение списка доступных книг (не архивированных).
+        /// Получение списка доступных (не архивированных) книг.
         /// </summary>
         /// <param name="filter">Фильтр для поиска книг.</param>
         /// <returns>Список доступных книг.</returns>
@@ -60,7 +62,7 @@ namespace PracticalWork.Library.Controllers.Api.v1
         }
 
         /// <summary>
-        /// Получение деталей выдачи книги по идентификатору или имени читателя.
+        /// Получение деталей выдачи книги по идентификатору выдачи или имени читателя.
         /// </summary>
         /// <param name="idOrReader">Идентификатор выдачи или имя читателя.</param>
         /// <returns>Детали выдачи книги, включая ссылку на обложку.</returns>
@@ -72,6 +74,7 @@ namespace PracticalWork.Library.Controllers.Api.v1
                 return NotFound();
 
             string coverUrl = null;
+
             if (!string.IsNullOrEmpty(borrow.BookId.ToString()))
             {
                 coverUrl = await _minioService.GetFileUrlAsync($"covers/{borrow.BookId}/cover.png");

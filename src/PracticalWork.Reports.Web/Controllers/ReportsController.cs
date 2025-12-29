@@ -5,7 +5,9 @@ using PracticalWork.Reports.Services;
 namespace PracticalWork.Reports.Web.Controllers;
 
 /// <summary>
-/// Контроллер для работы с отчетами: генерация, получение списка и скачивание.
+/// Контроллер для работы с отчётами: генерация, получение списка и скачивание.
+/// Предоставляет API для формирования отчётов по активности системы
+/// и получения ссылок на их загрузку.
 /// </summary>
 [ApiController]
 [Route("api/reports")]
@@ -19,17 +21,17 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// Генерация отчета по активности системы.
+    /// Генерирует отчёт по активности системы за указанный период.
     /// </summary>
     /// <param name="request">
-    /// Параметры отчета:
+    /// Параметры отчёта:
     /// <br/>• <b>From</b> — начало периода
     /// <br/>• <b>To</b> — конец периода
-    /// <br/>• <b>EventType</b> — тип события
+    /// <br/>• <b>EventType</b> — тип события (необязательно)
     /// </param>
-    /// <returns>Метаданные созданного отчета.</returns>
-    /// <response code="200">Отчет успешно создан</response>
-    /// <response code="400">Ошибка валидации параметров</response>
+    /// <returns>Метаданные созданного отчёта.</returns>
+    /// <response code="200">Отчёт успешно создан.</response>
+    /// <response code="400">Ошибка валидации параметров.</response>
     [HttpPost("generate")]
     [ProducesResponseType(typeof(ReportDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> Generate([FromBody] GenerateReportRequest request)
@@ -39,10 +41,11 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// Получение списка доступных отчетов.
+    /// Возвращает список доступных отчётов.
+    /// Использует кэширование для ускорения повторных запросов.
     /// </summary>
-    /// <returns>Список отчетов с метаданными.</returns>
-    /// <response code="200">Список успешно получен</response>
+    /// <returns>Список отчётов с метаданными.</returns>
+    /// <response code="200">Список успешно получен.</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<ReportInfoDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetReports()
@@ -52,12 +55,12 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// Получение ссылки для скачивания отчета.
+    /// Возвращает временную ссылку для скачивания отчёта.
     /// </summary>
-    /// <param name="reportName">Имя файла отчета (например: report_2025_12_18.csv)</param>
-    /// <returns>Signed URL для скачивания отчета.</returns>
-    /// <response code="200">Ссылка успешно сгенерирована</response>
-    /// <response code="404">Отчет не найден</response>
+    /// <param name="reportName">Имя файла отчёта (например: <c>report_2025_12_18.csv</c>).</param>
+    /// <returns>Подписанный URL для скачивания отчёта.</returns>
+    /// <response code="200">Ссылка успешно сгенерирована.</response>
+    /// <response code="404">Отчёт не найден.</response>
     [HttpGet("{reportName}/download")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> Download(string reportName)
