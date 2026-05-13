@@ -1,34 +1,47 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace PracticalWork.Library.Abstractions.Services
+namespace PracticalWork.Library.Abstractions.Services;
+
+/// <summary>
+/// Сервис для работы с объектным хранилищем MinIO.
+/// Предоставляет базовые операции загрузки, удаления и получения ссылок на файлы.
+/// </summary>
+public interface IMinioService
 {
     /// <summary>
-    /// Сервис для работы с объектным хранилищем MinIO.
-    /// Предоставляет базовые операции загрузки, удаления и получения ссылок на файлы.
+    /// Загружает файл в хранилище MinIO (в дефолтный бакет).
     /// </summary>
-    public interface IMinioService
-    {
-        /// <summary>
-        /// Загружает файл в хранилище MinIO.
-        /// </summary>
-        /// <param name="stream">Поток данных загружаемого файла.</param>
-        /// <param name="objectName">Имя объекта (ключ), под которым файл будет сохранён.</param>
-        /// <param name="contentType">MIME‑тип файла.</param>
-        /// <returns>Путь или URL загруженного объекта.</returns>
-        Task<string> UploadAsync(Stream stream, string objectName, string contentType);
+    Task<string> UploadAsync(Stream stream, string objectName, string contentType);
 
-        /// <summary>
-        /// Удаляет файл из хранилища MinIO.
-        /// </summary>
-        /// <param name="objectName">Имя объекта (ключ), который необходимо удалить.</param>
-        Task DeleteAsync(string objectName);
+    /// <summary>
+    /// Загружает файл в указанный бакет.
+    /// </summary>
+    Task<string> UploadToBucketAsync(Stream stream, string objectName, string contentType, string bucketName);
 
-        /// <summary>
-        /// Возвращает публичный URL файла в хранилище MinIO.
-        /// Может зависеть от настроек доступа к bucket.
-        /// </summary>
-        /// <param name="objectName">Имя объекта.</param>
-        /// <returns>URL файла.</returns>
-        Task<string> GetFileUrlAsync(string objectName);
-    }
+    /// <summary>
+    /// Удаляет файл из хранилища MinIO.
+    /// </summary>
+    Task DeleteAsync(string objectName);
+
+    /// <summary>
+    /// Возвращает публичный URL файла в дефолтном бакете.
+    /// Работает только для публичных бакетов.
+    /// </summary>
+    Task<string> GetFileUrlAsync(string objectName);
+
+    /// <summary>
+    /// Возвращает публичный URL файла в указанном бакете.
+    /// Работает только для публичных бакетов.
+    /// </summary>
+    Task<string> GetFileUrlAsync(string objectName, string bucketName);
+
+    /// <summary>
+    /// Возвращает временную подписанную ссылку (presigned URL) для приватного объекта.
+    /// Ссылка действительна в течение указанного времени.
+    /// </summary>
+    /// <param name="objectName">Имя объекта в хранилище.</param>
+    /// <param name="expiry">Срок действия ссылки.</param>
+    /// <param name="bucketName">Имя бакета (опционально, по умолчанию — дефолтный).</param>
+    /// <returns>Presigned URL для скачивания файла.</returns>
+    Task<string> GetPresignedUrlAsync(string objectName, TimeSpan expiry, string bucketName = null);
 }

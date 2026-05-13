@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Data.PostgreSql.Entities;
+using System.Reflection.Emit;
 
 namespace PracticalWork.Library.Data.PostgreSql;
 
@@ -23,7 +24,18 @@ public sealed class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        builder.Entity<AbstractBookEntity>()
+            .ToTable("books") 
+            .HasDiscriminator<string>("book_type")  
+            .HasValue<AbstractBookEntity>("base")
+            .HasValue<ScientificBookEntity>("scientific")
+            .HasValue<EducationalBookEntity>("educational")
+            .HasValue<FictionBookEntity>("fiction");
+
+        builder.Entity<ReaderEntity>().ToTable("readers");
+        builder.Entity<BookBorrowEntity>().ToTable("book_borrows");
+        builder.Entity<NotificationLogEntity>().ToTable("notification_logs");
     }
 
     #region Set UpdateDate on SaveChanges
@@ -86,4 +98,5 @@ public sealed class AppDbContext : DbContext
 
     /// <summary>Набор записей о выдаче книг.</summary>
     internal DbSet<BookBorrowEntity> BookBorrows { get; set; }
+    public DbSet<NotificationLogEntity> NotificationLogs { get; set; } = null!;
 }

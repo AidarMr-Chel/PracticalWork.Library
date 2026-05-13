@@ -41,5 +41,6 @@ namespace PracticalWork.Library.Abstractions.Storage
         /// <param name="readerId">Идентификатор читателя.</param>
         /// <returns>Модель выдачи.</returns>
         Task<Borrow> GetByReaderIdAsync(Guid readerId);
+        Task<IEnumerable<Borrow>> GetAllActiveAsync();
     }
 }

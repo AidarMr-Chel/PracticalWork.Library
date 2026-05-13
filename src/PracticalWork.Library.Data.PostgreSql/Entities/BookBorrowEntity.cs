@@ -1,11 +1,14 @@
 ﻿using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PracticalWork.Library.Data.PostgreSql.Entities;
 
 /// <summary>
 /// Выдачи книги на руки читателю
 /// </summary>
+[Table("book_borrows")]
+
 public sealed class BookBorrowEntity : EntityBase
 {
     /// <summary>Идентификатор книги</summary>

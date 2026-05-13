@@ -10,9 +10,6 @@ internal sealed class AbstractBookConfiguration : EntityConfigurationBase<Abstra
     {
         base.Configure(builder);
 
-        // Используется схема наследования TPT по следующим причинам:
-        // 1. Для книги нужна сквозная нумерация Id. У TPC она тоже возможна, но у TPT нагляднее.
-        // 2. Для упрощения привязки общих таблиц и возможности использовать FK-ключи и ограничения на уровне БД.
         builder.UseTptMappingStrategy();
 
         builder.Property(p => p.Title)

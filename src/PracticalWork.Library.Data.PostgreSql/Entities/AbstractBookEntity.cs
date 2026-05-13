@@ -7,6 +7,7 @@ namespace PracticalWork.Library.Data.PostgreSql.Entities;
 /// Базовый класс для сущностей книг.
 /// Содержит общие поля, используемые всеми типами книг.
 /// </summary>
+
 public abstract class AbstractBookEntity : EntityBase
 {
     /// <summary>

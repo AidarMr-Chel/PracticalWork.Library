@@ -52,4 +52,5 @@ public interface IMinioService
     /// <param name="expiry">Время жизни ссылки.</param>
     /// <returns>Подписанный URL.</returns>
     Task<string> GetSignedUrlAsync(string objectName, TimeSpan expiry);
+
 }

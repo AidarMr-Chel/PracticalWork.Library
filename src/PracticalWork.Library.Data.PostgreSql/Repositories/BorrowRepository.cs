@@ -121,5 +121,13 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
 
             return entity == null ? null : MapToModel(entity);
         }
+        public async Task<IEnumerable<Borrow>> GetAllActiveAsync()
+        {
+            var entities = await _context.BookBorrows
+                .Where(b => b.Status == BookIssueStatus.Issued)
+                .ToListAsync();
+
+            return entities.Select(MapToModel);
+        }
     }
 }

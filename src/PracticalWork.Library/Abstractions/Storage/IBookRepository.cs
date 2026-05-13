@@ -34,5 +34,6 @@ namespace PracticalWork.Library.Abstractions.Storage
         /// <param name="filter">Фильтр по свойствам книги.</param>
         /// <returns>Коллекция найденных книг.</returns>
         Task<IEnumerable<Book>> FindAsync(Book filter);
+        Task<IEnumerable<Book>> GetArchivableBooksAsync(int yearsWithoutBorrow, int limit, CancellationToken ct = default);
     }
 }

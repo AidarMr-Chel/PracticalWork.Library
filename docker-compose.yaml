@@ -75,6 +75,19 @@ services:
     networks:
       - backend
 
+  # SMTP сервер для разработки (smtp4dev)
+  smtp4dev:
+    image: rnwood/smtp4dev
+    container_name: smtp4dev
+    restart: unless-stopped
+    ports:
+      - "3000:80"   # Web UI
+      - "2525:25"   # SMTP порт
+    environment:
+      ServerOptions__HostName: smtp4dev
+    networks:
+      - backend
+
 volumes:
   postgres_library_data:
   postgres_reports_data:

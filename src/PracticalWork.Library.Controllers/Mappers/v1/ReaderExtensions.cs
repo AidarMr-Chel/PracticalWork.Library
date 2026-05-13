@@ -20,7 +20,9 @@ namespace PracticalWork.Library.Controllers.Mappers.v1
             {
                 FullName = request.FullName,
                 PhoneNumber = request.PhoneNumber,
-                ExpiryDate = request.ExpiryDate
+                ExpiryDate = request.ExpiryDate,
+                Email = request.Email
+
             };
     }
 }

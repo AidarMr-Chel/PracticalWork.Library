@@ -108,6 +108,7 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
         /// </summary>
         /// <param name="entity">Сущность читателя.</param>
         /// <returns>Модель читателя.</returns>
+        // В методе MapToModel:
         private static Reader MapToModel(ReaderEntity entity) =>
             new Reader
             {
@@ -115,14 +116,10 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
                 FullName = entity.FullName,
                 PhoneNumber = entity.PhoneNumber,
                 ExpiryDate = entity.ExpiryDate,
-                IsActive = entity.IsActive
+                IsActive = entity.IsActive,
+                Email = entity.Email  
             };
 
-        /// <summary>
-        /// Преобразует модель читателя в сущность для хранения.
-        /// </summary>
-        /// <param name="model">Модель читателя.</param>
-        /// <returns>Сущность читателя.</returns>
         private static ReaderEntity MapToEntity(Reader model) =>
             new ReaderEntity
             {
@@ -130,7 +127,8 @@ namespace PracticalWork.Library.Data.PostgreSql.Repositories
                 FullName = model.FullName,
                 PhoneNumber = model.PhoneNumber,
                 ExpiryDate = model.ExpiryDate,
-                IsActive = model.IsActive
+                IsActive = model.IsActive,
+                Email = model.Email  
             };
 
         /// <summary>

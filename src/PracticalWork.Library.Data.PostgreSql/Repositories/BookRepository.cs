@@ -1,8 +1,8 @@
-﻿using PracticalWork.Library.Abstractions.Storage;
+﻿using Microsoft.EntityFrameworkCore;
+using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Data.PostgreSql.Entities;
 using PracticalWork.Library.Enums;
 using PracticalWork.Library.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace PracticalWork.Library.Data.PostgreSql.Repositories;
 
@@ -156,4 +156,40 @@ public sealed class BookRepository : IBookRepository
         CoverImagePath = entity.CoverImagePath,
         IsArchived = entity.Status == BookStatus.Archived
     };
+
+    /// <summary>
+    /// Возвращает книги, подходящие для архивации.
+    /// Возвращает доменные модели (Book), а не сущности.
+    /// </summary>
+    public async Task<IEnumerable<Book>> GetArchivableBooksAsync(
+        int yearsWithoutBorrow,
+        int limit,
+        CancellationToken ct = default)
+    {
+        var cutoffDate = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-yearsWithoutBorrow));
+
+        var lastBorrowQuery = _context.BookBorrows
+            .GroupBy(b => b.BookId)
+            .Select(g => new
+            {
+                BookId = g.Key,
+                LastBorrowDate = g.Max(x => x.BorrowDate)
+            });
+
+        var entities = await _context.Books
+            .Where(b => b.Status == BookStatus.Available)
+            .Where(b => b.Status != BookStatus.Archived)
+            .Where(b =>
+                !lastBorrowQuery.Any(lb => lb.BookId == b.Id) ||
+                lastBorrowQuery
+                    .Where(lb => lb.BookId == b.Id)
+                    .Select(lb => lb.LastBorrowDate)
+                    .First() < cutoffDate
+            )
+            .Take(limit)
+            .ToListAsync(ct);
+
+        return entities.Select(MapEntityToBook);
+    }
+
 }
