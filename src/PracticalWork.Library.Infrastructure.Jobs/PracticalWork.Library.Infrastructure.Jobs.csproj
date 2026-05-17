@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Quartz" />
+		<PackageReference Include="Quartz.Extensions.DependencyInjection" />
+		<PackageReference Include="Quartz.Serialization.Json" />
+		<PackageReference Include="Quartz.AspNetCore" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\PracticalWork.Library\PracticalWork.Library.csproj" />
+		<ProjectReference Include="..\PracticalWork.Library.Data.PostgreSql\PracticalWork.Library.Data.PostgreSql.csproj" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,6 @@
+﻿⚠️ Ошибка генерации отчёта
+Период: {PeriodStart} — {PeriodEnd}
+Количество ошибок: {ErrorCount}
+
+Детали:
+{ErrorDetails}

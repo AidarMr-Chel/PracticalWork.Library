@@ -3,10 +3,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Npgsql;
-using Quartz;
 using PracticalWork.Library.Abstractions.Services;
 using PracticalWork.Library.Abstractions.Storage;
-using PracticalWork.Library.Models;
 using PracticalWork.Library.Cache.Redis;
 using PracticalWork.Library.Controllers;
 using PracticalWork.Library.Data.Minio;
@@ -15,17 +13,19 @@ using PracticalWork.Library.Data.PostgreSql.Repositories;
 using PracticalWork.Library.Exceptions;
 using PracticalWork.Library.Infrastructure.Jobs;
 using PracticalWork.Library.MessageBroker;
+using PracticalWork.Library.Models;
 using PracticalWork.Library.Services;
 using PracticalWork.Library.Web.Configuration;
-using System.Net.Sockets;
 using System.Text.Json.Serialization;
-using System.Xml.Linq;
 
 namespace PracticalWork.Library.Web;
 
+/// <summary>
+/// Конфигурация приложения (DI, middleware, инфраструктура).
+/// </summary>
 public class Startup
 {
-    private static string _basePath;
+    private static string _basePath = string.Empty;
     private IConfiguration Configuration { get; }
 
     public Startup(IConfiguration configuration)
@@ -33,37 +33,42 @@ public class Startup
         Configuration = configuration;
 
         _basePath = string.IsNullOrWhiteSpace(Configuration["GlobalPrefix"])
-            ? ""
-            : $"/{Configuration["GlobalPrefix"].Trim('/')}";
+            ? string.Empty
+            : $"/{Configuration["GlobalPrefix"]!.Trim('/')}";
     }
 
+    /// <summary>
+    /// Регистрирует сервисы, инфраструктуру, настройки и фоновые задачи.
+    /// </summary>
     public void ConfigureServices(IServiceCollection services)
     {
-
+        // =========================
+        // PostgreSQL (основная БД)
+        // =========================
         services.AddPostgreSqlStorage(cfg =>
         {
-            var npgsqlDataSource = new NpgsqlDataSourceBuilder(
-                    Configuration["App:DbConnectionString"])
+            var dataSource = new NpgsqlDataSourceBuilder(Configuration["App:DbConnectionString"])
                 .EnableDynamicJson()
                 .Build();
 
-            cfg.UseNpgsql(npgsqlDataSource);
+            cfg.UseNpgsql(dataSource);
         });
 
-        services.Configure<ArchiveSettings>(Configuration.GetSection("ArchiveSettings"));
-
-        services.AddDbContext<PracticalWork.Library.Data.PostgreSql.ReportsDbContext>(options =>
+        // =========================
+        // Reports DbContext (БД отчётов)
+        // =========================
+        services.AddDbContext<ReportsDbContext>(options =>
         {
-            var npgsqlDataSource = new NpgsqlDataSourceBuilder(
-                    Configuration["App:ReportsDbConnectionString"])
+            var dataSource = new NpgsqlDataSourceBuilder(Configuration["App:ReportsDbConnectionString"])
                 .EnableDynamicJson()
                 .Build();
 
-            options.UseNpgsql(npgsqlDataSource);
+            options.UseNpgsql(dataSource);
         });
-        services.Configure<MinioReportsSettings>(
-            Configuration.GetSection("MinioReportsSettings"));
 
+        // =========================
+        // MVC + Swagger
+        // =========================
         services.AddMvc(opt =>
         {
             opt.Filters.Add<DomainExceptionFilter<AppException>>();
@@ -72,148 +77,66 @@ public class Startup
         .AddControllersAsServices()
         .AddJsonOptions(options =>
         {
-            options.JsonSerializerOptions.Converters.Add(
-                new JsonStringEnumConverter());
-
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         });
 
         services.AddSwaggerGen(c =>
         {
             c.CustomSchemaIds(type => type.FullName);
-
             c.UseOneOfForPolymorphism();
-
-            c.IncludeXmlComments(
-                Path.Combine(
-                    AppContext.BaseDirectory,
-                    "PracticalWork.Library.Contracts.xml"));
-
-            c.IncludeXmlComments(
-                Path.Combine(
-                    AppContext.BaseDirectory,
-                    "PracticalWork.Library.Controllers.xml"));
+            c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "PracticalWork.Library.Contracts.xml"));
+            c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "PracticalWork.Library.Controllers.xml"));
         });
 
-
-        services.AddDomain();
-
-        services.AddCache(Configuration);
-
-        services.AddMinioFileStorage(Configuration);
-
-        services.AddRabbitMqPublisher(Configuration);
-
-
-        services.Configure<EmailSettings>(
-            Configuration.GetSection("EmailSettings"));
-
-        services.Configure<JobSettings>(
-            Configuration.GetSection("JobSettings"));
-
-        services.Configure<ArchiveSettings>(
-            Configuration.GetSection("ArchiveSettings"));
-
-        services.Configure<EmailTemplateSettings>(
-            Configuration.GetSection("EmailTemplateSettings"));
-
-
-        services.AddScoped<IEmailService, SmtpEmailService>();
-
-
+        // =========================
+        // Репозитории
+        // =========================
+        services.AddScoped<IReminderRepository, ReminderRepository>();
+        services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
         services.AddScoped<INotificationLogRepository, NotificationLogRepository>();
 
+        // =========================
+        // Сервисы
+        // =========================
+        services.AddSingleton<IEmailTemplateService, FileEmailTemplateService>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
 
-        services.AddQuartz(q =>
-        {
-            var connectionString =
-                Configuration["App:DbConnectionString"];
+        // =========================
+        // TimeProvider (тестируемость)
+        // =========================
+        services.AddSingleton<TimeProvider>(_ => TimeProvider.System);
 
+        // =========================
+        // Доменные сервисы
+        // =========================
+        services.AddDomain();
 
-            q.UsePersistentStore(s =>
-            {
-                s.UseProperties = true;
+        // =========================
+        // Инфраструктура
+        // =========================
+        services.AddCache(Configuration);
+        services.AddMinioFileStorage(Configuration);
+        services.AddRabbitMqPublisher(Configuration);
 
-                s.UsePostgres(connectionString);
+        // =========================
+        // Фоновые задачи (Quartz)
+        // =========================
+        services.AddJobs(Configuration);
 
-                s.UseNewtonsoftJsonSerializer();
-
-                s.Properties["quartz.jobStore.tablePrefix"] = "qrtz_";
-            });
-
-
-            var jobSettings =
-                Configuration
-                    .GetSection("JobSettings:Jobs")
-                    .Get<Dictionary<string, JobConfiguration>>()
-                ?? new Dictionary<string, JobConfiguration>();
-
-
-            foreach (var (jobKey, config) in jobSettings)
-            {
-
-                var jobType = jobKey switch
-                {
-                    "ReturnReminder" => typeof(ReturnReminderJob),
-
-                    "WeeklyReport" => typeof(WeeklyReportJob),
-
-                    "ArchiveBooks" => typeof(ArchiveBooksJob),
-
-                    _ => throw new InvalidOperationException(
-                        $"Unknown job: {jobKey}")
-                };
-
-
-                var jobName = jobKey;
-
-                var jobGroup = "LibraryJobs";
-
-                var triggerName = $"{jobKey}-trigger";
-
-                var triggerGroup = "LibraryJobs";
-
-
-                var key = new JobKey(jobName, jobGroup);
-
-
-                q.AddJob(
-                    jobType,
-                    key,
-                    cfg =>
-                    {
-                        cfg.StoreDurably();
-                    });
-
-
-                q.AddTrigger(cfg => cfg
-                    .ForJob(key)
-
-                    .WithIdentity(
-                        triggerName,
-                        triggerGroup)
-
-                    .WithCronSchedule(
-                        config.CronExpression,
-                        x =>
-                        {
-                            x.InTimeZone(
-                                TimeZoneInfo.FindSystemTimeZoneById(
-                                    "Russian Standard Time"));
-
-                            x.WithMisfireHandlingInstructionFireAndProceed();
-                        }));
-            }
-
-        });
-
-
-        services.AddQuartzHostedService(options =>
-        {
-            options.WaitForJobsToComplete = true;
-        });
+        // =========================
+        // Настройки (IOptions<T>)
+        // =========================
+        services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
+        services.Configure<JobSettings>(Configuration.GetSection("JobSettings"));
+        services.Configure<ArchiveSettings>(Configuration.GetSection("ArchiveSettings"));
+        services.Configure<EmailTemplateSettings>(Configuration.GetSection("EmailTemplateSettings"));
+        services.Configure<MinioReportsSettings>(Configuration.GetSection("MinioReportsSettings"));
     }
 
+    /// <summary>
+    /// Конфигурирует middleware‑конвейер приложения.
+    /// </summary>
     [UsedImplicitly]
     public void Configure(
         IApplicationBuilder app,
@@ -229,20 +152,13 @@ public class Startup
         app.UseEndpoints(endpoints =>
         {
             app.UseSwagger();
-
             app.UseSwaggerUI(options =>
             {
-                var descriptions =
-                    endpoints.DescribeApiVersions();
-
+                var descriptions = endpoints.DescribeApiVersions();
                 foreach (var description in descriptions)
                 {
-                    var url =
-                        $"/swagger/{description.GroupName}/swagger.json";
-
-                    var name =
-                        description.GroupName.ToUpperInvariant();
-
+                    var url = $"/swagger/{description.GroupName}/swagger.json";
+                    var name = description.GroupName.ToUpperInvariant();
                     options.SwaggerEndpoint(url, name);
                 }
             });

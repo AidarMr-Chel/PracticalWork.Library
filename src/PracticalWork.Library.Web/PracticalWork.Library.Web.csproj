@@ -2,11 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Все версии берутся из Directory.Packages.props -->
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
@@ -30,18 +33,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="appsettings.json" />
-    <AdditionalFiles Include="appsettings.Development.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\PracticalWork.Library.Infrastructure.Jobs\PracticalWork.Library.Infrastructure.Jobs.csproj" />
-    <ProjectReference Include="..\PracticalWork.Library.Cache.Redis\PracticalWork.Library.Cache.Redis.csproj" />
-    <ProjectReference Include="..\PracticalWork.Library.Controllers\PracticalWork.Library.Controllers.csproj" />
-    <ProjectReference Include="..\PracticalWork.Library.Data.Minio\PracticalWork.Library.Data.Minio.csproj" />
-    <ProjectReference Include="..\PracticalWork.Library.Data.PostgreSql\PracticalWork.Library.Data.PostgreSql.csproj" />
-    <ProjectReference Include="..\PracticalWork.Library.MessageBroker\PracticalWork.Library.MessageBroker.csproj" />
     <ProjectReference Include="..\PracticalWork.Library\PracticalWork.Library.csproj" />
+    <ProjectReference Include="..\PracticalWork.Library.Controllers\PracticalWork.Library.Controllers.csproj" />
+    <ProjectReference Include="..\PracticalWork.Library.Data.PostgreSql\PracticalWork.Library.Data.PostgreSql.csproj" />
+    <ProjectReference Include="..\PracticalWork.Library.Data.Minio\PracticalWork.Library.Data.Minio.csproj" />
+    <ProjectReference Include="..\PracticalWork.Library.Cache.Redis\PracticalWork.Library.Cache.Redis.csproj" />
+    <ProjectReference Include="..\PracticalWork.Library.MessageBroker\PracticalWork.Library.MessageBroker.csproj" />
+    <ProjectReference Include="..\PracticalWork.Library.Infrastructure.Jobs\PracticalWork.Library.Infrastructure.Jobs.csproj" />
   </ItemGroup>
+	<ItemGroup>
+		<Content Include="..\Infrastructure\Templates\**\*.*">
+			<LinkBase>Templates</LinkBase>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+
 
 </Project>

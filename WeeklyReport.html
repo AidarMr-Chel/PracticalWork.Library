@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+</head>
+<body style='font-family:Arial,sans-serif;color:#333;font-size:16px;margin:20px;'>
+    <h2 style='color:#2c3e50;margin-bottom:20px;'>📊 Еженедельный отчет библиотеки</h2>
+    <p><strong>Период:</strong> {PeriodStart} — {PeriodEnd}</p>
+    <table style='border-collapse:collapse;width:100%;margin:20px 0;'>
+        <thead><tr style='background:#f4f4f4;'><th style='border:1px solid #ddd;padding:12px;'>Параметр</th><th style='border:1px solid #ddd;padding:12px;'>Значение</th></tr></thead>
+        <tbody>
+            <tr><td style='border:1px solid #ddd;padding:12px;'>Новых выдач</td><td style='border:1px solid #ddd;padding:12px;text-align:center;font-weight:bold;'>{NewBorrows}</td></tr>
+            <tr><td style='border:1px solid #ddd;padding:12px;'>Возвратов</td><td style='border:1px solid #ddd;padding:12px;text-align:center;font-weight:bold;'>{Returns}</td></tr>
+            <tr><td style='border:1px solid #ddd;padding:12px;'>Просроченных возвратов</td><td style='border:1px solid #ddd;padding:12px;text-align:center;font-weight:bold;color:#dc3545;'>{Overdue}</td></tr>
+        </tbody>
+    </table>
+    <p><a href='{DownloadUrl}' style='background:#007bff;color:white;padding:10px 20px;text-decoration:none;border-radius:4px;'>📥 Скачать полный CSV-отчет</a></p>
+    <hr style='border:none;border-top:1px solid #eee;margin:30px 0;' />
+    <p style='color:#6c757d;font-size:14px;'>Отчет сгенерирован автоматически.<br />Ссылка действительна {ExpiryDays} дней. Файл хранится 90 дней.</p>
+</body>
+</html>

@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+</head>
+<body style='font-family: Arial, sans-serif; color: #333; font-size: 16px; margin: 0; padding: 20px;'>
+    <p style='margin: 0 0 20px;'>Уважаемый(ая) {ReaderFullName}!</p>
+    <p style='margin: 0 0 20px;'>Напоминаем вам о необходимости возврата книги в библиотеку.</p>
+    <div style='border: 1px solid #dee2e6; background: #f8f9fa; padding: 20px; margin-bottom: 20px; border-radius: 4px;'>
+        <h3 style='margin: 0 0 15px;'>ИНФОРМАЦИЯ О КНИГЕ:</h3>
+        <p style='margin: 5px 0;'><strong>Название:</strong> {BookTitle}</p>
+        <p style='margin: 5px 0;'><strong>Автор(ы):</strong> {BookAuthors}</p>
+        <p style='margin: 5px 0;'><strong>Срок возврата:</strong> {DueDate}</p>
+        <p style='margin: 5px 0;'><strong>Осталось дней:</strong> {DaysLeft}</p>
+    </div>
+    <p style='margin: 0 0 20px;'>Пожалуйста, верните книгу до указанной даты.</p>
+    <div style='background: #e9ecef; padding: 15px; border-radius: 4px; margin-bottom: 20px;'>
+        <strong>КОНТАКТЫ БИБЛИОТЕКИ:</strong>
+        <ul style='list-style: none; padding: 0; margin: 10px 0 0;'>
+            <li>Адрес: {LibraryAddress}</li>
+            <li>Телефон: {LibraryPhone}</li>
+            <li>Часы работы: {WorkingHours}</li>
+        </ul>
+    </div>
+    <p style='font-style: italic; color: #6c757d; font-size: 14px;'>С уважением,<br />Администрация библиотеки «{LibraryName}»</p>
+    <hr style='border: none; border-top: 1px solid #dee2e6; margin: 20px 0;' />
+    <p style='text-align: center; color: #adb5bd; font-size: 12px;'>Это письмо было отправлено автоматически.<br />Если вы уже вернули книгу, проигнорируйте это сообщение.</p>
+</body>
+</html>

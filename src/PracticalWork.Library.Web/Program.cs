@@ -13,7 +13,7 @@ public class Program
         try
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomainOnUnhandledException;
-            TaskScheduler.UnobservedTaskException += OnTaskSchedulerOnUnobservedTaskException;
+            TaskScheduler.UnobservedTaskException += OnTaskSchedulerOnUnobservedTaskException!;
 
             await RunWebApplication(args);
         }
@@ -84,10 +84,10 @@ public class Program
     }
 
     private static void OnTaskSchedulerOnUnobservedTaskException(object sender,
-        UnobservedTaskExceptionEventArgs eventArgs)
+        UnobservedTaskExceptionEventArgs? eventArgs)
     {
-        eventArgs.SetObserved();
-        eventArgs.Exception.Flatten().Handle(ex =>
+        eventArgs?.SetObserved();
+        eventArgs?.Exception.Flatten().Handle(ex =>
         {
             SystemLogger.LogError(ex, "Unhandled exception in Task Scheduler handler");
             return true;
