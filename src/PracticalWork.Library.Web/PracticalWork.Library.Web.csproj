@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -9,11 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Все версии берутся из Directory.Packages.props -->
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
-    <PackageReference Include="Microsoft.Extensions.Logging" />
-    <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Quartz" />
     <PackageReference Include="Quartz.AspNetCore" />
     <PackageReference Include="Quartz.Extensions.DependencyInjection" />

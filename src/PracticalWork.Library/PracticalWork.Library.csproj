@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" />
@@ -21,3 +21,4 @@
     <ProjectReference Include="..\PracticalWork.Library.MessageBroker\PracticalWork.Library.MessageBroker.csproj" />
   </ItemGroup>
 </Project>
+
