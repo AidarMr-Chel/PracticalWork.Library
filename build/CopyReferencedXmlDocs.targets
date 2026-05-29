@@ -1,0 +1,13 @@
+<Project>
+  <!-- Copies XML documentation from referenced assemblies into the Web output (for Swagger). -->
+  <Target Name="CopyReferencedXmlDocs" AfterTargets="Build">
+    <ItemGroup>
+      <_RefXml Include="@(ReferencePath->'%(RootDir)%(Directory)%(Filename).xml')"
+               Condition="Exists('%(RootDir)%(Directory)%(Filename).xml')" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_RefXml)"
+          DestinationFolder="$(OutputPath)"
+          SkipUnchangedFiles="true"
+          Condition="'@(_RefXml)' != ''" />
+  </Target>
+</Project>

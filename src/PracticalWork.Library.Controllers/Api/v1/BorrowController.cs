@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PracticalWork.Library.Abstractions.Services;
 using PracticalWork.Library.Controllers.Validations.v1;
@@ -24,7 +25,11 @@ namespace PracticalWork.Library.Controllers.Api.v1
         /// <summary>
         /// Создание новой выдачи книги читателю.
         /// </summary>
+        /// <param name="query">Идентификаторы книги и читателя.</param>
+        /// <returns>Идентификатор созданной выдачи.</returns>
         [HttpPost("borrow")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateBorrow([FromQuery] CreateBorrowQuery query)
         {
             var borrowId = await _borrowService.CreateBorrow(query.BookId, query.ReaderId);
@@ -34,7 +39,10 @@ namespace PracticalWork.Library.Controllers.Api.v1
         /// <summary>
         /// Возврат книги в библиотеку.
         /// </summary>
+        /// <param name="query">Идентификатор книги.</param>
         [HttpPost("return")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> ReturnBook([FromQuery] ReturnBookQuery query)
         {
             await _borrowService.ReturnBook(query.BookId);

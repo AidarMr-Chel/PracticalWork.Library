@@ -10,4 +10,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)build\CopyReferencedXmlDocs.targets"
+          Condition="'$(UsingMicrosoftNETSdkWeb)' == 'true'" />
 </Project>

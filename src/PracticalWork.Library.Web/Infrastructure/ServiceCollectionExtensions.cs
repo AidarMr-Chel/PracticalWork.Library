@@ -59,10 +59,20 @@ public static class ServiceCollectionExtensions
 
         services.AddSwaggerGen(c =>
         {
+            c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+            {
+                Title = "PracticalWork.Library API",
+                Version = "v1",
+                Description =
+                    "Сервис управления библиотекой: книги, читатели, выдачи и возвраты. " +
+                    "Публикует события в RabbitMQ, хранит обложки в MinIO, кэширует данные в Redis.",
+            });
+
             c.CustomSchemaIds(type => type.FullName);
             c.UseOneOfForPolymorphism();
-            c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "PracticalWork.Library.Contracts.xml"));
-            c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "PracticalWork.Library.Controllers.xml"));
+
+            foreach (var xml in Directory.EnumerateFiles(AppContext.BaseDirectory, "*.xml"))
+                c.IncludeXmlComments(xml, includeControllerXmlComments: true);
         });
 
         services.AddScoped<IReminderRepository, ReminderRepository>();

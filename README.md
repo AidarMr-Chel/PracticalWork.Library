@@ -1,138 +1,134 @@
-PracticalWork — Library & Reports Microservices
+# PracticalWork — Library & Reports
 
-Общие сведения
-Проект состоит из двух независимых микросервисов:
-1. PracticalWork.Library — сервис управления библиотекой
-2. PracticalWork.Reports — сервис генерации отчётов и логирования активности
+Два микросервиса на **.NET 10** с общей инфраструктурой (PostgreSQL, Redis, MinIO, RabbitMQ).
 
-Оба сервиса используют общую инфраструктуру: PostgreSQL, Redis, MinIO, RabbitMQ, Docker Compose.
 
-============================================================
-PracticalWork.Library
-============================================================
+| Сервис                    | Назначение                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| **PracticalWork.Library** | Книги, читатели, выдача/возврат, фоновые задачи (Quartz), события в RabbitMQ |
+| **PracticalWork.Reports** | Приём событий, логи активности, генерация CSV-отчётов, API отчётов           |
 
-Назначение:
-- Управление книгами и читателями
-- Выдача и возврат книг
-- Публикация событий в RabbitMQ
-- Хранение обложек книг в MinIO
-- Кэширование списков и деталей в Redis
 
-Исполняемые модули:
-- PracticalWork.Library.Web — ASP.NET 8 WebApi
-- PracticalWork.Library.Data.PostgreSql.Migrator — миграции БД
+## Быстрый старт
 
-Интеграции:
-- PostgreSQL — основная база данных
-- Redis — кэширование
-- MinIO — хранение файлов
-- RabbitMQ — публикация событий
+```bash
+# 1. Инфраструктура
+docker compose up -d
 
-============================================================
-PracticalWork.Reports
-============================================================
+# 2. Миграции
+dotnet ef database update --project src/PracticalWork.Library.Data.PostgreSql
+dotnet ef database update --project src/PracticalWork.Reports.Data.PostgreSql
 
-Назначение:
-- Подписка на события из сервиса библиотеки
-- Запись активности в PostgreSQL
-- Генерация CSV‑отчётов
-- Хранение отчётов в MinIO
-- Кэширование списка отчётов в Redis
-- API для логов, отчётов и скачивания файлов
+# 3. Запуск API (два терминала)
+dotnet run --project src/PracticalWork.Library.Web
+dotnet run --project src/PracticalWork.Reports.Web
+```
 
-Исполняемые модули:
-- PracticalWork.Reports.Web — ASP.NET 8 WebApi
-- PracticalWork.Reports.Data.PostgreSql.Migrator — миграции БД
-- PracticalWork.Reports.MessageBroker.Consumer — подписка на RabbitMQ
 
-Интеграции:
-- PostgreSQL — база данных отчётов и логов
-- Redis — кэш списка отчётов
-- MinIO — хранилище CSV‑файлов
-- RabbitMQ — получение событий
+| Сервис  | Swagger                                                        |
+| ------- | -------------------------------------------------------------- |
+| Library | [http://localhost:5251/swagger](http://localhost:5251/swagger) |
+| Reports | [http://localhost:5252/swagger](http://localhost:5252/swagger) |
 
-============================================================
-Инструкция по запуску
-============================================================
 
-Предварительные требования:
-- Docker + Docker Compose
-- .NET 8 SDK
-- PostgreSQL клиент (pgAdmin / DBeaver)
-- Redis CLI (опционально)
-- RabbitMQ Management Console
+Подробная инструкция: **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)**
 
-Запуск инфраструктуры:
- docker-compose up -d
+## Документация
 
-Применение миграций:
- Library:
-  dotnet ef database update --project src/PracticalWork.Library.Data.PostgreSql
- Reports:
-  dotnet ef database update --project src/PracticalWork.Reports.Data.PostgreSql
 
-Запуск сервисов:
- Library:
-  dotnet run --project src/PracticalWork.Library.Web
- Reports:
-  dotnet run --project src/PracticalWork.Reports.Web
+| Тип              | Описание                                         | Ссылка                                                       |
+| ---------------- | ------------------------------------------------ | ------------------------------------------------------------ |
+| XML-комментарии  | `///` на public API, `GenerateDocumentationFile` | [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)               |
+| Swagger          | OpenAPI + описания из XML                        | см. URL выше                                                 |
+| README           | Этот файл                                        | —                                                            |
+| Развёртывание    | Docker, БД, порты, troubleshooting               | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)                     |
+| Рефакторинг      | Clean Architecture, чеклист                      | [REPORT.md](REPORT.md)                                       |
+| Покрытие тестами | Coverlet, HTML-отчёт                             | [\coverage-report\index.html](..\coverage-report\index.html) |
 
-Swagger:
- Library: http://localhost:5251/swagger
- Reports: http://localhost:5252/swagger
 
-============================================================
-Основные сценарии Library
-============================================================
+## PracticalWork.Library
 
-- POST /api/v1/books — добавление книги
-- PUT /api/v1/books/{id} — редактирование книги
-- POST /api/v1/books/{id}/archive — архивирование книги
-- POST /api/v1/library/borrow — выдача книги
-- POST /api/v1/library/return — возврат книги
-- GET /api/v1/library/books — доступные книги
+**Слои:** Controllers → Services → Repositories (PostgreSQL, Redis, MinIO, RabbitMQ).
 
-============================================================
-Основные сценарии Reports
-============================================================
+**Основные API (v1):**
 
-- GET /api/reports/activity — получение логов активности
-- POST /api/reports/generate — генерация отчёта
-- GET /api/reports — список отчётов
-- GET /api/reports/{reportName}/download — скачивание отчёта
 
-============================================================
-Проверка инфраструктуры
-============================================================
+| Метод | Путь                         | Описание          |
+| ----- | ---------------------------- | ----------------- |
+| POST  | `/api/v1/books`              | Создать книгу     |
+| PUT   | `/api/v1/books/{id}`         | Обновить книгу    |
+| POST  | `/api/v1/books/{id}/archive` | Архивировать      |
+| GET   | `/api/v1/books`              | Список с фильтром |
+| POST  | `/api/v1/library/borrow`     | Выдача            |
+| POST  | `/api/v1/library/return`     | Возврат           |
+| GET   | `/api/v1/library/books`      | Доступные книги   |
+| CRUD  | `/api/v1/readers`            | Читатели          |
 
-Redis:
- redis-cli keys *
 
-MinIO:
- http://localhost:9001 (minioadmin/minioadmin)
- Бакет: reports
+**Фоновые задачи:** напоминание о возврате, еженедельный отчёт, архивация книг.
 
-RabbitMQ:
- http://localhost:15672 (guest/guest)
- Очередь: reports.activity
+## PracticalWork.Reports
 
-============================================================
-Архитектурные решения
-============================================================
+**Слои:** Web → Services → Repositories; consumer RabbitMQ в фоне.
 
-Library:
-- Чистая архитектура
-- Контроллеры → Сервисы → Репозитории
-- Кэширование Redis
-- Хранение файлов MinIO
-- Публикация событий RabbitMQ
-- Инвалидация кэша через реестр ключей
 
-Reports:
-- Подписка на события RabbitMQ
-- Запись логов в PostgreSQL
-- Генерация CSV
-- Хранение файлов в MinIO
-- Кэширование списка отчётов
-- API для логов и отчётов
-- Signed URL для скачивания
+| Метод | Путь                           | Описание                      |
+| ----- | ------------------------------ | ----------------------------- |
+| GET   | `/api/reports/activity`        | Логи активности (пагинация)   |
+| POST  | `/api/reports/generate`        | Сгенерировать отчёт за период |
+| GET   | `/api/reports`                 | Список отчётов                |
+| GET   | `/api/reports/{name}/download` | Presigned URL                 |
+
+
+## Инфраструктура
+
+```
+docker compose up -d
+```
+
+
+| Компонент          | UI / порт                                                                    |
+| ------------------ | ---------------------------------------------------------------------------- |
+| MinIO              | [http://localhost:9001](http://localhost:9001) (`minioadmin` / `minioadmin`) |
+| RabbitMQ           | [http://localhost:15672](http://localhost:15672) (`rabbit` / `rabbit`)       |
+| smtp4dev           | [http://localhost:3000](http://localhost:3000)                               |
+| PostgreSQL Library | `localhost:5440`                                                             |
+| PostgreSQL Reports | `localhost:5433`                                                             |
+| Redis              | `localhost:6379`                                                             |
+
+
+## Тесты
+
+```bash
+dotnet test PracticalWork.Library.sln
+```
+
+Отчёт покрытия (67+ тестов):
+
+```cmd
+scripts\Generate-CoverageReport.cmd
+```
+
+→ `coverage-report\index.html`
+
+## Структура решения
+
+```
+src/
+  PracticalWork.Library.*          # Домен и API библиотеки
+  PracticalWork.Reports.*          # Отчёты и логи
+tests/
+  PracticalWork.Library.Tests
+  PracticalWork.Reports.Tests
+utils/
+  PracticalWork.Library.Data.PostgreSql.Migrator
+docs/                              # DEPLOYMENT, DOCUMENTATION
+```
+
+## Сборка
+
+```bash
+dotnet build PracticalWork.Library.sln
+```
+
+Требуется **.NET 10 SDK**.
