@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Include>[PracticalWork.Library]*,[PracticalWork.Library.Controllers]*,[PracticalWork.Library.Contracts]*,[PracticalWork.Reports.Entities]*,[PracticalWork.Reports.Services]*,[PracticalWork.Library.Data.*]*,[PracticalWork.Reports.Data.*]*,[PracticalWork.Library.Cache.*]*,[PracticalWork.Reports.Cache.*]*,[PracticalWork.Library.MessageBroker]*,[PracticalWork.Reports.MessageBroker]*,[PracticalWork.Library.Data.Minio]*,[PracticalWork.Reports.Minio]*,[PracticalWork.Library.Infrastructure.Jobs]*</Include>
+          <Exclude>[*]*Tests*,[*]*.Migrations.*,[*]*.Web*</Exclude>
+          <ExcludeByFile>**/Migrations/**</ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

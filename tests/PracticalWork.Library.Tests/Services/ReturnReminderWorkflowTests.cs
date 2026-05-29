@@ -6,6 +6,7 @@ using PracticalWork.Library.Abstractions.Services;
 using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Models;
 using PracticalWork.Library.Services;
+using PracticalWork.Library.Tests.Helpers;
 
 namespace PracticalWork.Library.Tests.Services;
 
@@ -100,8 +101,4 @@ public class ReturnReminderWorkflowTests
             NullLogger<ReturnReminderWorkflow>.Instance);
     }
 
-    private sealed class FakeTimeProvider(DateTimeOffset utcNow) : TimeProvider
-    {
-        public override DateTimeOffset GetUtcNow() => utcNow;
-    }
 }

@@ -112,6 +112,87 @@ public class BorrowServiceTests
     }
 
     [Fact]
+    public async Task CreateBorrow_WhenBookArchived_Throws()
+    {
+        var bookId = Guid.NewGuid();
+        var readerId = Guid.NewGuid();
+        _bookRepository.Setup(r => r.GetByIdAsync(bookId))
+            .ReturnsAsync(TestData.CreateBook(id: bookId, status: BookStatus.Archived));
+
+        var act = () => CreateSut().CreateBorrow(bookId, readerId);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*архиве*");
+    }
+
+    [Fact]
+    public async Task ReturnBook_WhenActiveBorrow_UpdatesStatusesAndPublishesEvent()
+    {
+        var bookId = Guid.NewGuid();
+        var borrowId = Guid.NewGuid();
+        var borrow = new Borrow
+        {
+            Id = borrowId,
+            BookId = bookId,
+            ReaderId = Guid.NewGuid(),
+            BorrowDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-10)),
+            DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(20)),
+            Status = BookIssueStatus.Issued
+        };
+        var book = TestData.CreateBook(id: bookId, status: BookStatus.Borrow);
+
+        _borrowRepository.Setup(r => r.GetActiveBorrowAsync(bookId)).ReturnsAsync(borrow);
+        _bookRepository.Setup(r => r.GetByIdAsync(bookId)).ReturnsAsync(book);
+
+        await CreateSut().ReturnBook(bookId);
+
+        borrow.Status.Should().Be(BookIssueStatus.Returned);
+        borrow.ReturnDate.Should().NotBe(default);
+        book.Status.Should().Be(BookStatus.Available);
+        _borrowRepository.Verify(r => r.UpdateBorrowAsync(borrow), Times.Once);
+        _publisher.Verify(p => p.PublishAsync(It.IsAny<BookReturnedEvent>()), Times.Once);
+        _cache.Verify(c => c.ClearByRegistryAsync("Borrow:Keys"), Times.Once);
+        _cache.Verify(c => c.ClearByRegistryAsync("AvailableBooks:Keys"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenCached_DoesNotCallRepository()
+    {
+        var id = Guid.NewGuid();
+        var cached = new Borrow { Id = id, BookId = Guid.NewGuid(), ReaderId = Guid.NewGuid() };
+        _cache.Setup(c => c.GetAsync<Borrow>($"Borrow:{id}")).ReturnsAsync(cached);
+
+        var result = await CreateSut().GetByIdAsync(id);
+
+        result.Should().BeSameAs(cached);
+        _borrowRepository.Verify(r => r.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetDetailsAsync_ByReaderName_DelegatesToRepository()
+    {
+        var readerId = Guid.NewGuid();
+        var reader = TestData.CreateReader(id: readerId);
+        var borrow = new Borrow
+        {
+            Id = Guid.NewGuid(),
+            BookId = Guid.NewGuid(),
+            ReaderId = readerId,
+            BorrowDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            DueDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(30)),
+            Status = BookIssueStatus.Issued
+        };
+
+        _readerRepository.Setup(r => r.GetByNameAsync(reader.FullName)).ReturnsAsync(reader);
+        _borrowRepository.Setup(r => r.GetByReaderIdAsync(readerId)).ReturnsAsync(borrow);
+        _cache.Setup(c => c.GetAsync<Borrow>(It.IsAny<string>())).ReturnsAsync((Borrow)null!);
+
+        var result = await CreateSut().GetDetailsAsync(reader.FullName);
+
+        result.Should().BeSameAs(borrow);
+    }
+
+    [Fact]
     public async Task GetBorrowDetailsAsync_WhenFound_RequestsCoverUrl()
     {
         var borrowId = Guid.NewGuid();

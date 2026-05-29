@@ -111,6 +111,22 @@ public class BookServiceTests
     }
 
     [Fact]
+    public async Task ArchivingBook_WhenFound_ArchivesPublishesAndClearsCache()
+    {
+        var id = Guid.NewGuid();
+        var book = TestData.CreateBook(id: id);
+        _repository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(book);
+
+        var result = await CreateSut().ArchivingBook(id);
+
+        result.Status.Should().Be(BookStatus.Archived);
+        _repository.Verify(r => r.UpdateAsync(It.Is<Book>(b => b.IsArchived)), Times.Once);
+        _publisher.Verify(p => p.PublishAsync(It.IsAny<BookArchivedEvent>()), Times.Once);
+        _cache.Verify(c => c.ClearByRegistryAsync("Books:Keys"), Times.Once);
+        _cache.Verify(c => c.RemoveAsync($"Book:{id}:Details"), Times.Once);
+    }
+
+    [Fact]
     public async Task UpdateBookDetails_WhenInvalidContentType_Throws()
     {
         var id = Guid.NewGuid();
