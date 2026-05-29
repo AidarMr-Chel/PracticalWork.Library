@@ -56,9 +56,20 @@ OpenAPI JSON:
 ## 5. Дополнительно
 
 
-| Документ                                                     | Назначение                         |
-| ------------------------------------------------------------ | ---------------------------------- |
-| [REPORT.md](../REPORT.md)                                    | Отчёт о рефакторинге и архитектуре |
-| [\coverage-report\index.html](..\coverage-report\index.html) | Покрытие кода тестами              |
+| Документ                                                                                   | Назначение                         |
+| ------------------------------------------------------------------------------------------ | ---------------------------------- |
+| [REPORT.md](../REPORT.md)                                                                  | Отчёт о рефакторинге и архитектуре |
+| [\coverage-report\index.html](..\coverage-report\index.html)                               | Покрытие кода тестами              |
+| [presentation/PracticalWork.Presentation.pdf](presentation/PracticalWork.Presentation.pdf) | Презентация результатов (PDF)      |
 
+
+## 6. Презентация результатов
+
+Готовый файл: `docs/presentation/PracticalWork.Presentation.pdf`.
+
+Пересборка презентации:
+
+```cmd
+scripts\Generate-Presentation.cmd
+```
 
