@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PracticalWork.Library.MessageBroker.Abstractions;
+using PracticalWork.Library.Abstractions.Messaging;
 using PracticalWork.Library.MessageBroker.RabbitMQ;
 
 namespace PracticalWork.Library.MessageBroker
@@ -21,6 +21,7 @@ namespace PracticalWork.Library.MessageBroker
         {
             services.Configure<RabbitMqOptions>(configuration.GetSection("App:RabbitMQ"));
 
+            services.AddSingleton<IRabbitMqConnection, RabbitMqConnection>();
             services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
 
             return services;

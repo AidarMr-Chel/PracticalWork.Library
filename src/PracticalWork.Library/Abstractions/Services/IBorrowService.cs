@@ -53,5 +53,12 @@ namespace PracticalWork.Library.Abstractions.Services
         /// </param>
         /// <returns>Модель выдачи.</returns>
         Task<Borrow> GetDetailsAsync(string idOrReader);
+
+        /// <summary>
+        /// Возвращает детали выдачи с URL обложки книги.
+        /// </summary>
+        /// <param name="idOrReader">Идентификатор выдачи или ФИО читателя.</param>
+        /// <returns>DTO ответа или null, если выдача не найдена.</returns>
+        Task<BorrowDetailsResponse> GetBorrowDetailsAsync(string idOrReader);
     }
 }

@@ -12,6 +12,10 @@
 		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis"/>
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\PracticalWork.Reports.Entities\PracticalWork.Reports.Entities.csproj" />
+	</ItemGroup>
+
 
 </Project>
 

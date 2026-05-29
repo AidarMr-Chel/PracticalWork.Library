@@ -32,8 +32,24 @@ namespace PracticalWork.Library.Abstractions.Storage
         /// Выполняет поиск книг по указанному фильтру.
         /// </summary>
         /// <param name="filter">Фильтр по свойствам книги.</param>
+        /// <param name="excludeArchived">Исключить архивированные книги.</param>
+        /// <param name="cancellationToken">Токен отмены.</param>
         /// <returns>Коллекция найденных книг.</returns>
-        Task<IEnumerable<Book>> FindAsync(Book filter);
+        Task<IReadOnlyList<Book>> FindAsync(
+            Book filter,
+            bool excludeArchived = false,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Выполняет поиск книг с пагинацией на уровне БД.
+        /// </summary>
+        Task<IReadOnlyList<Book>> FindPagedAsync(
+            Book filter,
+            int pageNumber,
+            int pageSize,
+            bool excludeArchived = false,
+            CancellationToken cancellationToken = default);
+
         Task<IEnumerable<Book>> GetArchivableBooksAsync(int yearsWithoutBorrow, int limit, CancellationToken ct = default);
     }
 }

@@ -1,31 +1,27 @@
 ﻿using System.Text;
-using System.Text.Json;
-using PracticalWork.Reports.Cache.Redis;
-using PracticalWork.Reports.Data.PostgreSql;
-using PracticalWork.Reports.Data.PostgreSql.Repositories;
 using PracticalWork.Reports.Entities;
+using PracticalWork.Reports.Entities.Abstractions;
 using PracticalWork.Reports.Entities.DTO;
 using PracticalWork.Reports.Minio;
+using PracticalWork.Reports.Services.Abstractions;
 
 namespace PracticalWork.Reports.Services;
 
 /// <summary>
 /// Сервис для работы с отчётами.
-/// Отвечает за генерацию отчётов, сохранение файлов в MinIO,
-/// кэширование списка отчётов и выдачу ссылок на скачивание.
 /// </summary>
-public class ReportService
+public sealed class ReportService : IReportService
 {
-    private readonly ActivityLogRepository _activityRepo;
-    private readonly ReportRepository _reportRepo;
+    private readonly IActivityLogRepository _activityRepo;
+    private readonly IReportRepository _reportRepo;
     private readonly IMinioService _minio;
-    private readonly RedisCacheService _cache;
+    private readonly IReportsCacheService _cache;
 
     public ReportService(
-        ActivityLogRepository activityRepo,
-        ReportRepository reportRepo,
+        IActivityLogRepository activityRepo,
+        IReportRepository reportRepo,
         IMinioService minio,
-        RedisCacheService cache)
+        IReportsCacheService cache)
     {
         _activityRepo = activityRepo;
         _reportRepo = reportRepo;
@@ -33,16 +29,12 @@ public class ReportService
         _cache = cache;
     }
 
-    /// <summary>
-    /// Генерирует отчёт за указанный период с возможностью фильтрации по типу события.
-    /// Формирует CSV‑файл, загружает его в MinIO, сохраняет запись об отчёте в БД
-    /// и очищает кэш списка отчётов.
-    /// </summary>
-    /// <param name="request">Параметры генерации отчёта.</param>
-    /// <returns>Информация о сформированном отчёте.</returns>
-    public async Task<ReportDto> GenerateReportAsync(GenerateReportRequest request)
+    /// <inheritdoc />
+    public async Task<ReportDto> GenerateReportAsync(
+        GenerateReportRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var logs = await _activityRepo.GetLogsAsync(request.From, request.To, request.EventType);
+        var logs = await _activityRepo.GetLogsAsync(request.From, request.To, request.EventType, cancellationToken);
 
         var csv = GenerateCsv(logs);
 
@@ -63,8 +55,8 @@ public class ReportService
             Status = ReportStatus.Completed
         };
 
-        await _reportRepo.AddAsync(report);
-        await _cache.RemoveAsync("reports:list");
+        await _reportRepo.AddAsync(report, cancellationToken);
+        await _cache.RemoveAsync("reports:list", cancellationToken);
 
         return new ReportDto
         {
@@ -75,32 +67,10 @@ public class ReportService
         };
     }
 
-    /// <summary>
-    /// Генерирует CSV‑представление списка логов активности.
-    /// </summary>
-    /// <param name="logs">Коллекция логов активности.</param>
-    /// <returns>CSV‑файл в виде массива байтов.</returns>
-    private byte[] GenerateCsv(IEnumerable<ActivityLog> logs)
+    /// <inheritdoc />
+    public async Task<List<ReportInfoDto>> GetReportsAsync(CancellationToken cancellationToken = default)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("CreatedAt,EventType,Payload");
-
-        foreach (var log in logs)
-        {
-            sb.AppendLine($"{log.CreatedAt},{log.EventType},{log.Payload}");
-        }
-
-        return Encoding.UTF8.GetBytes(sb.ToString());
-    }
-
-    /// <summary>
-    /// Возвращает список доступных отчётов.
-    /// Использует кэш Redis для ускорения повторных запросов.
-    /// </summary>
-    /// <returns>Список отчётов.</returns>
-    public async Task<List<ReportInfoDto>> GetReportsAsync()
-    {
-        var cached = await _cache.GetAsync<List<ReportInfoDto>>("reports:list");
+        var cached = await _cache.GetAsync<List<ReportInfoDto>>("reports:list", cancellationToken);
         if (cached != null)
             return cached;
 
@@ -116,18 +86,13 @@ public class ReportService
             .OrderByDescending(x => x.CreatedAt)
             .ToList();
 
-        await _cache.SetAsync("reports:list", reports, TimeSpan.FromHours(24));
+        await _cache.SetAsync("reports:list", reports, TimeSpan.FromHours(24), cancellationToken);
 
         return reports;
     }
 
-    /// <summary>
-    /// Возвращает временный URL для скачивания отчёта по имени файла.
-    /// </summary>
-    /// <param name="reportName">Имя файла отчёта.</param>
-    /// <returns>Подписанный URL для скачивания.</returns>
-    /// <exception cref="FileNotFoundException">Если отчёт не найден.</exception>
-    public async Task<string> GetDownloadUrlAsync(string reportName)
+    /// <inheritdoc />
+    public async Task<string> GetDownloadUrlAsync(string reportName, CancellationToken cancellationToken = default)
     {
         var objects = await _minio.ListAsync("reports");
 
@@ -138,5 +103,16 @@ public class ReportService
             throw new FileNotFoundException("Report not found");
 
         return await _minio.GetSignedUrlAsync(file.Key, TimeSpan.FromMinutes(10));
+    }
+
+    private static byte[] GenerateCsv(IEnumerable<ActivityLog> logs)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("CreatedAt,EventType,Payload");
+
+        foreach (var log in logs)
+            sb.AppendLine($"{log.CreatedAt},{log.EventType},{log.Payload}");
+
+        return Encoding.UTF8.GetBytes(sb.ToString());
     }
 }

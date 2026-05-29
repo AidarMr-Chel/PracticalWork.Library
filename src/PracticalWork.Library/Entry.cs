@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using PracticalWork.Library.Abstractions.Services;
 using PracticalWork.Library.Services;
+using PracticalWork.Library.Services.Reports;
 
 namespace PracticalWork.Library;
 
@@ -20,6 +21,13 @@ public static class Entry
         services.AddScoped<IBookService, BookService>();
         services.AddScoped<IReaderService, ReaderService>();
         services.AddScoped<IBorrowService, BorrowService>();
+
+        services.AddScoped<IWeeklyReportPeriodProvider, WeeklyReportPeriodProvider>();
+        services.AddScoped<IWeeklyReportStatisticsAggregator, WeeklyReportStatisticsAggregator>();
+        services.AddScoped<IWeeklyReportCsvBuilder, WeeklyReportCsvBuilder>();
+        services.AddScoped<IWeeklyReportFilePublisher, WeeklyReportFilePublisher>();
+        services.AddScoped<IWeeklyReportEmailNotifier, WeeklyReportEmailNotifier>();
+        services.AddScoped<WeeklyReportWorkflow>();
 
         return services;
     }

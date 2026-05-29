@@ -1,14 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PracticalWork.Reports.Cache.Redis;
-using PracticalWork.Reports.Data.PostgreSql;
-using PracticalWork.Reports.Data.PostgreSql.Repositories;
-using PracticalWork.Reports.MessageBroker;
-using PracticalWork.Reports.Minio;
-using PracticalWork.Reports.Services;
+﻿using PracticalWork.Reports.Web.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
-
-var config = builder.Configuration;
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -32,22 +24,7 @@ builder.Services.AddSwaggerGen(options =>
     options.DocInclusionPredicate((name, api) => true);
 });
 
-builder.Services.AddDbContext<ReportsDbContext>(options =>
-    options.UseNpgsql(config["App:DbConnectionString"]));
-
-builder.Services.Configure<RabbitMqOptions>(
-    config.GetSection("App:RabbitMQ"));
-
-builder.Services.AddReportsCache(builder.Configuration);
-builder.Services.AddMinioModule(builder.Configuration);
-
-builder.Services.AddScoped<ActivityLogRepository>();
-builder.Services.AddScoped<ReportRepository>();
-builder.Services.AddScoped<ReportService>();
-
-builder.Services.AddHostedService<ReportsEventConsumer>();
-
-builder.Services.AddControllers();
+builder.Services.AddReportsApplication(builder.Configuration);
 
 var app = builder.Build();
 

@@ -1,95 +1,67 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using PracticalWork.Reports.Data.PostgreSql;
-using PracticalWork.Reports.Entities;
-using RabbitMQ.Client;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using PracticalWork.Reports.Services.Abstractions;
 using RabbitMQ.Client.Events;
 using System.Text;
-using Microsoft.Extensions.DependencyInjection;
 
-namespace PracticalWork.Reports.MessageBroker
+namespace PracticalWork.Reports.MessageBroker;
+
+/// <summary>
+/// Потребитель событий RabbitMQ для модуля отчётов.
+/// </summary>
+public sealed class ReportsEventConsumer : BackgroundService
 {
-    /// <summary>
-    /// Фоновый сервис‑потребитель событий RabbitMQ для модуля отчётов.
-    /// Получает сообщения из очереди, сохраняет их в базу данных как логи активности.
-    /// </summary>
-    public class ReportsEventConsumer : BackgroundService
+    private readonly IServiceProvider _provider;
+    private readonly IReportsRabbitMqChannel _rabbitMq;
+    private readonly ILogger<ReportsEventConsumer> _logger;
+
+    public ReportsEventConsumer(
+        IServiceProvider provider,
+        IReportsRabbitMqChannel rabbitMq,
+        ILogger<ReportsEventConsumer> logger)
     {
-        private readonly IServiceProvider _provider;
-        private readonly RabbitMqOptions _options;
-        private readonly IConnection _connection;
-        private readonly IModel _channel;
+        _provider = provider;
+        _rabbitMq = rabbitMq;
+        _logger = logger;
+    }
 
-        /// <summary>
-        /// Создаёт экземпляр потребителя событий отчётов и настраивает подключение к RabbitMQ.
-        /// </summary>
-        /// <param name="provider">Провайдер сервисов для создания скоупов.</param>
-        /// <param name="options">Настройки подключения к RabbitMQ.</param>
-        public ReportsEventConsumer(IServiceProvider provider, IOptions<RabbitMqOptions> options)
+    /// <inheritdoc />
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var channel = _rabbitMq.Channel;
+        var consumer = new AsyncEventingBasicConsumer(channel);
+
+        consumer.Received += async (_, ea) =>
         {
-            _provider = provider;
-            _options = options.Value;
-
-            var factory = new ConnectionFactory
-            {
-                HostName = _options.Host,
-                UserName = _options.User,
-                Password = _options.Password
-            };
-
-            _connection = factory.CreateConnection();
-            _channel = _connection.CreateModel();
-
-            _channel.ExchangeDeclare(
-                exchange: _options.Exchange,
-                type: ExchangeType.Topic,
-                durable: true);
-
-            _channel.QueueDeclare(
-                queue: "reports.activity",
-                durable: true,
-                exclusive: false,
-                autoDelete: false);
-
-            _channel.QueueBind(
-                queue: "reports.activity",
-                exchange: _options.Exchange,
-                routingKey: "#");
-        }
-
-        /// <summary>
-        /// Основной цикл обработки сообщений.
-        /// Подписывается на очередь и сохраняет каждое событие в базу данных.
-        /// </summary>
-        /// <param name="stoppingToken">Токен отмены для корректной остановки сервиса.</param>
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            var consumer = new EventingBasicConsumer(_channel);
-
-            consumer.Received += async (_, ea) =>
+            try
             {
                 var json = Encoding.UTF8.GetString(ea.Body.ToArray());
                 var eventType = ea.RoutingKey;
 
                 using var scope = _provider.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<ReportsDbContext>();
+                var ingestion = scope.ServiceProvider.GetRequiredService<IActivityLogIngestionService>();
 
-                db.ActivityLogs.Add(new ActivityLog
-                {
-                    EventType = eventType,
-                    Payload = json,
-                    CreatedAt = DateTime.UtcNow
-                });
+                await ingestion.IngestAsync(eventType, json, stoppingToken);
 
-                await db.SaveChangesAsync();
-            };
+                channel.BasicAck(ea.DeliveryTag, multiple: false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to ingest activity event");
+                channel.BasicNack(ea.DeliveryTag, multiple: false, requeue: true);
+            }
+        };
 
-            _channel.BasicConsume(
-                queue: "reports.activity",
-                autoAck: true,
-                consumer: consumer);
+        channel.BasicConsume(
+            queue: "reports.activity",
+            autoAck: false,
+            consumerTag: string.Empty,
+            noLocal: false,
+            exclusive: false,
+            arguments: null,
+            consumer: consumer);
 
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
     }
 }

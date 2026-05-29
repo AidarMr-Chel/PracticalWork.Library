@@ -7,8 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PracticalWork.Reports.Cache.Redis\PracticalWork.Reports.Cache.Redis.csproj" />
-    <ProjectReference Include="..\PracticalWork.Reports.Data.PostgreSql\PracticalWork.Reports.Data.PostgreSql.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\PracticalWork.Reports.Entities\PracticalWork.Reports.Entities.csproj" />
     <ProjectReference Include="..\PracticalWork.Reports.Minio\PracticalWork.Reports.Minio.csproj" />
   </ItemGroup>

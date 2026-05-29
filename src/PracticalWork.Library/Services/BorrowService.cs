@@ -2,7 +2,7 @@
 using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Contracts.v1.Events.Borrows;
 using PracticalWork.Library.Enums;
-using PracticalWork.Library.MessageBroker.Abstractions;
+using PracticalWork.Library.Abstractions.Messaging;
 using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Services
@@ -17,6 +17,7 @@ namespace PracticalWork.Library.Services
         private readonly IBorrowRepository _borrowRepository;
         private readonly IBookRepository _bookRepository;
         private readonly IReaderRepository _readerRepository;
+        private readonly IMinioService _minioService;
         private readonly ICacheService _cache;
         private readonly IMessagePublisher _publisher;
 
@@ -27,12 +28,14 @@ namespace PracticalWork.Library.Services
             IBorrowRepository borrowRepository,
             IBookRepository bookRepository,
             IReaderRepository readerRepository,
+            IMinioService minioService,
             ICacheService cache,
             IMessagePublisher publisher)
         {
             _borrowRepository = borrowRepository;
             _bookRepository = bookRepository;
             _readerRepository = readerRepository;
+            _minioService = minioService;
             _cache = cache;
             _publisher = publisher;
         }
@@ -141,8 +144,7 @@ namespace PracticalWork.Library.Services
             if (cached != null)
                 return cached;
 
-            var books = await _bookRepository.FindAsync(filter);
-            var available = books.Where(b => !b.IsArchived).ToList();
+            var available = await _bookRepository.FindAsync(filter, excludeArchived: true);
 
             await _cache.SetAsync(cacheKey, available, TimeSpan.FromMinutes(10));
             await _cache.TrackKeyAsync(AvailableBooksKeysRegistry, cacheKey);
@@ -199,6 +201,30 @@ namespace PracticalWork.Library.Services
                 return null;
 
             return await _borrowRepository.GetByReaderIdAsync(reader.Id);
+        }
+
+        /// <inheritdoc />
+        public async Task<BorrowDetailsResponse> GetBorrowDetailsAsync(string idOrReader)
+        {
+            var borrow = await GetDetailsAsync(idOrReader);
+            if (borrow is null)
+                return null;
+
+            string coverUrl = null;
+            if (borrow.BookId != Guid.Empty)
+                coverUrl = await _minioService.GetFileUrlAsync($"covers/{borrow.BookId}/cover.png");
+
+            return new BorrowDetailsResponse
+            {
+                Id = borrow.Id,
+                BookId = borrow.BookId,
+                ReaderId = borrow.ReaderId,
+                BorrowDate = borrow.BorrowDate,
+                DueDate = borrow.DueDate,
+                ReturnDate = borrow.ReturnDate,
+                Status = borrow.Status.ToString(),
+                CoverUrl = coverUrl
+            };
         }
     }
 }

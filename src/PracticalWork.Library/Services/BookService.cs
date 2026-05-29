@@ -2,7 +2,7 @@
 using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Enums;
 using PracticalWork.Library.Exceptions;
-using PracticalWork.Library.MessageBroker.Abstractions;
+using PracticalWork.Library.Abstractions.Messaging;
 using PracticalWork.Library.Models;
 using PracticalWork.Library.Contracts.v1.Events.Books;
 
@@ -121,12 +121,7 @@ public sealed class BookService : IBookService
         if (cached != null)
             return cached;
 
-        var books = await _bookRepository.FindAsync(filter);
-
-        var paged = books
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
+        var paged = await _bookRepository.FindPagedAsync(filter, pageNumber, pageSize);
 
         await _cache.SetAsync(cacheKey, paged, TimeSpan.FromMinutes(10));
         await _cache.TrackKeyAsync(BooksRegistry, cacheKey);

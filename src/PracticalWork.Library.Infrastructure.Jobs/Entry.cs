@@ -27,7 +27,6 @@ public static class Entry
         // Регистрация воркфлоу
         services.AddScoped<ArchiveBooksWorkflow>();
         services.AddScoped<ReturnReminderWorkflow>();
-        services.AddScoped<WeeklyReportWorkflow>();
 
         // Настройка Quartz
         services.AddQuartz(q =>

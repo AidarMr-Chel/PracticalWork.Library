@@ -1,12 +1,12 @@
 ﻿using PracticalWork.Reports.Entities;
+using PracticalWork.Reports.Entities.Abstractions;
 
 namespace PracticalWork.Reports.Data.PostgreSql.Repositories;
 
 /// <summary>
 /// Репозиторий для работы с отчётами.
-/// Содержит операции сохранения отчётов в хранилище.
 /// </summary>
-public class ReportRepository
+public sealed class ReportRepository : IReportRepository
 {
     private readonly ReportsDbContext _db;
 
@@ -15,13 +15,10 @@ public class ReportRepository
         _db = db;
     }
 
-    /// <summary>
-    /// Добавляет новый отчёт в хранилище и сохраняет изменения.
-    /// </summary>
-    /// <param name="report">Отчёт, который необходимо сохранить.</param>
-    public async Task AddAsync(Report report)
+    /// <inheritdoc />
+    public async Task AddAsync(Report report, CancellationToken cancellationToken = default)
     {
         _db.Reports.Add(report);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
     }
 }

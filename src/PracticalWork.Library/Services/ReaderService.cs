@@ -2,7 +2,7 @@
 using PracticalWork.Library.Abstractions.Storage;
 using PracticalWork.Library.Contracts.v1.Events.Readers;
 using PracticalWork.Library.Enums;
-using PracticalWork.Library.MessageBroker.Abstractions;
+using PracticalWork.Library.Abstractions.Messaging;
 using PracticalWork.Library.Models;
 
 namespace PracticalWork.Library.Services

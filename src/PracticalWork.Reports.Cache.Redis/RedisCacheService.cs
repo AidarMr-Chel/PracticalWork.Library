@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
+using PracticalWork.Reports.Entities.Abstractions;
 
 namespace PracticalWork.Reports.Cache.Redis;
 
@@ -7,7 +8,7 @@ namespace PracticalWork.Reports.Cache.Redis;
 /// Сервис кэширования для отчётов, основанный на Redis.
 /// Использует <see cref="IDistributedCache"/> и сериализацию через <see cref="JsonSerializer"/>.
 /// </summary>
-public class RedisCacheService
+public sealed class RedisCacheService : IReportsCacheService
 {
     private readonly IDistributedCache _cache;
 
@@ -22,12 +23,13 @@ public class RedisCacheService
     /// </summary>
     /// <typeparam name="T">Тип возвращаемого значения.</typeparam>
     /// <param name="key">Ключ кэша.</param>
+    /// <param name="cancellationToken">Токен отмены.</param>
     /// <returns>
     /// Значение типа <typeparamref name="T"/> или <c>null</c>, если ключ отсутствует.
     /// </returns>
-    public async Task<T?> GetAsync<T>(string key)
+    public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
     {
-        var json = await _cache.GetStringAsync(key);
+        var json = await _cache.GetStringAsync(key, cancellationToken);
         return json == null ? default : JsonSerializer.Deserialize<T>(json);
     }
 
@@ -39,7 +41,8 @@ public class RedisCacheService
     /// <param name="key">Ключ кэша.</param>
     /// <param name="value">Сохраняемое значение.</param>
     /// <param name="ttl">Время жизни записи.</param>
-    public async Task SetAsync<T>(string key, T value, TimeSpan ttl)
+    /// <param name="cancellationToken">Токен отмены.</param>
+    public async Task SetAsync<T>(string key, T value, TimeSpan ttl, CancellationToken cancellationToken = default)
     {
         var json = JsonSerializer.Serialize(value);
 
@@ -49,16 +52,17 @@ public class RedisCacheService
             new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = ttl
-            }
-        );
+            },
+            cancellationToken);
     }
 
     /// <summary>
     /// Удаляет значение из кэша по указанному ключу.
     /// </summary>
     /// <param name="key">Ключ кэша.</param>
-    public Task RemoveAsync(string key) =>
-        _cache.RemoveAsync(key);
+    /// <param name="cancellationToken">Токен отмены.</param>
+    public Task RemoveAsync(string key, CancellationToken cancellationToken = default) =>
+        _cache.RemoveAsync(key, cancellationToken);
 
     /// <summary>
     /// Добавляет ключ в реестр, позволяющий группировать связанные записи.

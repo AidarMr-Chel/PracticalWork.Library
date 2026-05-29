@@ -15,7 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
-  <ProjectReference Include="..\PracticalWork.Reports.Entities\PracticalWork.Reports.Entities.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PracticalWork.Reports.Entities\PracticalWork.Reports.Entities.csproj" />
   </ItemGroup>
 
 	

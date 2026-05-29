@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PracticalWork.Reports.Entities.Abstractions;
 
 namespace PracticalWork.Reports.Cache.Redis;
 
@@ -24,7 +25,7 @@ public static class Entry
             options.InstanceName = configuration["App:Redis:InstanceName"];
         });
 
-        services.AddScoped<RedisCacheService>();
+        services.AddScoped<IReportsCacheService, RedisCacheService>();
 
         return services;
     }
